@@ -91,7 +91,8 @@ class _UrlScanScreenState extends State<UrlScanScreen> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => AnalyzingScreen(targetName: url),
+                        builder: (context) =>
+                            AnalyzingScreen(targetName: url, analysisId: ''),
                       ),
                     );
                   }

@@ -2,11 +2,17 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 import 'result_screen.dart';
 import '../const/my_const.dart';
+import '../services/vt_api.dart';
 
 class AnalyzingScreen extends StatefulWidget {
   final String targetName; // รับชื่อไฟล์ หรือ URL มาเพื่อแสดงบนจอ
+  final String analysisId; // รับ ID จากการอัปโหลดไฟล์
 
-  const AnalyzingScreen({super.key, required this.targetName});
+  const AnalyzingScreen({
+    super.key,
+    required this.targetName,
+    required this.analysisId,
+  });
 
   @override
   State<AnalyzingScreen> createState() => _AnalyzingScreenState();
@@ -36,38 +42,56 @@ class _AnalyzingScreenState extends State<AnalyzingScreen>
     );
 
     // 2. เริ่มจำลองการทำงานของแอป (เปลี่ยนข้อความไปเรื่อยๆ)
-    _simulateScanning();
+    _pollScanResult();
   }
 
-  Future<void> _simulateScanning() async {
-    await Future.delayed(const Duration(seconds: 2));
-    if (mounted)
-      setState(() => _statusText = "UPLOADING TO VIRUSTOTAL CLOUD...");
+  Future<void> _pollScanResult() async {
+    final apiService = VtApiService();
+    bool isCompleted = false;
 
-    await Future.delayed(const Duration(seconds: 2));
-    if (mounted)
-      setState(() => _statusText = "QUERYING 70+ ANTIVIRUS ENGINES...");
+    while (!isCompleted) {
+      // หน่วงเวลา 5 วินาที ป้องกัน API โดนแบน (Rate Limit ของฟรีให้ 4 request/นาที)
+      await Future.delayed(const Duration(seconds: 5));
+      if (!mounted) return; // ถ้าผู้ใช้กดปิดหน้าไปแล้ว ให้หยุดทำงาน
 
-    await Future.delayed(const Duration(seconds: 2));
-    if (mounted)
-      setState(() => _statusText = "ANALYZING HEURISTICS & SIGNATURES...");
+      final report = await apiService.getAnalysisReport(widget.analysisId);
 
-    await Future.delayed(const Duration(seconds: 2));
+      if (report != null) {
+        // แกะสถานะปัจจุบันออกมาดู (queued, in-progress, completed)
+        final status = report['data']['attributes']['status'];
 
-    // 3. จำลองผลลัพธ์ (สมมติว่าถ้ามีคำว่า exe หรือ apk ให้เป็นไวรัส)
-    bool isSafe =
-        !widget.targetName.toLowerCase().contains("exe") &&
-        !widget.targetName.toLowerCase().contains("apk");
+        if (status == 'completed') {
+          isCompleted = true; // ออกจากลูป while
 
-    // โหลดเสร็จแล้ว ย้ายไปหน้า Result
-    if (mounted) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) =>
-              ResultScreen(targetName: widget.targetName, isSafe: isSafe),
-        ),
-      );
+          // ดึงสถิติออกมา
+          final stats = report['data']['attributes']['stats'];
+          int malicious = stats['malicious'] ?? 0;
+          int undetected = stats['undetected'] ?? 0;
+          int harmless = stats['harmless'] ?? 0;
+          int suspicious = stats['suspicious'] ?? 0;
+
+          int total = malicious + undetected + harmless + suspicious;
+
+          // เด้งไปหน้าผลลัพธ์ พร้อมส่งตัวเลขจริงไปให้
+          if (mounted) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ResultScreen(
+                  targetName: widget.targetName,
+                  maliciousCount: malicious,
+                  totalEngines: total,
+                ),
+              ),
+            );
+          }
+        } else {
+          // ถ้ายังไม่เสร็จ ให้อัปเดตข้อความบนหน้าจอเรื่อยๆ
+          setState(() {
+            _statusText = "STATUS: ${status.toUpperCase()}...";
+          });
+        }
+      }
     }
   }
 

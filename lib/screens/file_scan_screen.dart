@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:vtscanner/services/vt_api.dart';
 import 'analysis_loading_screen.dart';
 import '../const/my_const.dart';
 import 'package:file_picker/file_picker.dart';
@@ -7,29 +8,36 @@ class FileScanScreen extends StatelessWidget {
   const FileScanScreen({super.key});
 
   Future<void> _pickFileAndScan(BuildContext context) async {
-    // 1. ในแอปจริง คุณจะใช้โค้ดประมาณนี้เพื่อเปิดหน้าเลือกไฟล์ของระบบ:
     FilePickerResult? result = await FilePicker.platform.pickFiles();
-    if (result == null) {
-      return; // ถ้าผู้ใช้กดยกเลิก ไม่เลือกไฟล์ ให้หยุดการทำงาน
+    if (result == null || result.files.single.path == null) {
+      return;
     }
     String fileName = result.files.single.name;
+    String filePath = result.files.single.path!;
 
-    // 2. สำหรับตอนนี้ เราจะจำลองการหน่วงเวลา 1 วินาที (เหมือนผู้ใช้กำลังเลือกไฟล์)
-    await Future.delayed(const Duration(seconds: 1));
+    final apiService = VtApiService();
+    String? analysisId = await apiService.uploadFileForScan(filePath);
 
-    // สมมติว่านี่คือชื่อไฟล์ที่ผู้ใช้เลือกมา
-    //String mockFileName = "unknown_installer.exe";
-
-    // 3. เมื่อได้ไฟล์มาแล้ว ให้เปลี่ยนหน้าไปหน้า AnalyzingScreen อัตโนมัติ
     if (context.mounted) {
-      // ใช้ pushReplacement เพื่อแทนที่หน้านี้ไปเลย
-      // (เวลากด Back จากหน้าโหลด จะได้กลับไปที่หน้า Home ไม่ใช่เด้งกลับมาหน้าเลือกไฟล์อีก)
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => AnalyzingScreen(targetName: fileName),
-        ),
-      );
+      if (analysisId != null) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) =>
+                AnalyzingScreen(targetName: fileName, analysisId: analysisId),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Failed to upload file',
+              style: TextStyle(color: Colors.white),
+            ),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
     }
   }
 

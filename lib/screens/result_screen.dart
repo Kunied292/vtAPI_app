@@ -3,21 +3,25 @@ import '../const/my_const.dart';
 
 class ResultScreen extends StatelessWidget {
   final String targetName;
-  final bool isSafe;
+  final int maliciousCount;
+  final int totalEngines;
 
   const ResultScreen({
     super.key,
     required this.targetName,
-    required this.isSafe,
+    required this.maliciousCount,
+    required this.totalEngines,
   });
 
   @override
   Widget build(BuildContext context) {
     // กำหนดสีและข้อความตามสถานะ (ปลอดภัย / อันตราย)
+    final bool isSafe = maliciousCount == 0;
+
     final Color statusColor = isSafe ? vtGreen : vtRed;
     final IconData statusIcon = isSafe ? Icons.verified_user : Icons.gpp_bad;
     final String statusText = isSafe ? "CLEAN" : "MALICIOUS";
-    final String score = isSafe ? "0 / 74" : "48 / 74";
+    final String score = "$maliciousCount / $totalEngines";
 
     return Scaffold(
       backgroundColor: vtBackground,

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+
 import 'file_scan_screen.dart';
 import 'url_scan_screen.dart';
-import 'dashboard_screen.dart'; // <--- เพิ่ม Import
-import 'profile_screen.dart'; // <--- เพิ่ม Import
+import 'dashboard_screen.dart';
+import 'profile_screen.dart';
+
 import '../const/my_const.dart';
 
 class ScanOptionScreen extends StatefulWidget {
