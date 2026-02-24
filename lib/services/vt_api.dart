@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'dart:io';
 
 class VtApiService {
   final String _apiKey =
@@ -7,33 +8,95 @@ class VtApiService {
 
   // ฟังก์ชันอัปโหลดไฟล์ไปยัง VirusTotal
   Future<String?> uploadFileForScan(String filePath) async {
-    // 1. กำหนด URL
-    final uri = Uri.parse('https://www.virustotal.com/api/v3/files');
+    // 1. อ่านขนาดไฟล์จากเครื่อง (หน่วยเป็น Bytes)
+    final file = File(filePath);
+    final int fileSizeInBytes = await file.length();
 
-    // 2. สร้าง MultipartRequest (ใช้สำหรับการส่งไฟล์)
-    var request = http.MultipartRequest('POST', uri);
+    // คำนวณขนาด (1 MB = 1024 * 1024 Bytes)
+    final int limit32MB = 32 * 1024 * 1024;
+    final int limit650MB = 650 * 1024 * 1024;
 
-    // 3. แนบ Headers ตามที่ Docs ระบุ
+    // ถ้าไฟล์ใหญ่กว่า 650MB ไม่ต้องทำต่อ (เกินที่ VT กำหนด)
+    if (fileSizeInBytes > limit650MB) {
+      print('ERROR: File is larger than 650MB.');
+      return null;
+    }
+
+    // กำหนด URL เริ่มต้นเป็นแบบปกติ (สำหรับไฟล์เล็ก)
+    String uploadUrl = 'https://www.virustotal.com/api/v3/files';
+
+    // 2. ถ้าไฟล์ใหญ่กว่า 32 MB ต้องไปขอ URL พิเศษมาก่อน
+    if (fileSizeInBytes > limit32MB) {
+      print('File is > 32MB. Requesting special upload URL...');
+      try {
+        final urlResponse = await http.get(
+          Uri.parse('https://www.virustotal.com/api/v3/files/upload_url'),
+          headers: {'x-apikey': _apiKey, 'accept': 'application/json'},
+        );
+
+        if (urlResponse.statusCode == 200) {
+          final jsonUrlData = jsonDecode(urlResponse.body);
+          uploadUrl = jsonUrlData['data']; // เอา URL ยาวๆ ที่ได้มาใช้แทน
+          print('Got special URL! Ready to upload.');
+        } else {
+          print('Failed to get upload URL: ${urlResponse.statusCode}');
+          return null;
+        }
+      } catch (e) {
+        print('Error getting upload URL: $e');
+        return null;
+      }
+    }
+
+    // 3. เริ่มขั้นตอนอัปโหลด (ใช้ URL ไหนก็แล้วแต่เงื่อนไขด้านบน)
+    var request = http.MultipartRequest('POST', Uri.parse(uploadUrl));
     request.headers.addAll({'x-apikey': _apiKey, 'accept': 'application/json'});
 
-    // 4. แนบไฟล์เข้าไปใน Request
+    // แนบไฟล์
     request.files.add(await http.MultipartFile.fromPath('file', filePath));
 
     try {
-      // 5. สั่งยิง API
       var streamedResponse = await request.send();
-      // แปลง stream กลับมาเป็น response ปกติให้อ่านง่าย
       var response = await http.Response.fromStream(streamedResponse);
 
       if (response.statusCode == 200) {
-        // อัปโหลดสำเร็จ! แกะ JSON เพื่อเอา Analysis ID
-        print('------------- Upload Success -------------');
         var jsonResponse = jsonDecode(response.body);
-        String analysisId = jsonResponse['data']['id'];
-        return analysisId;
+        return jsonResponse['data']['id']; // ส่ง Analysis ID กลับไป
       } else {
-        // กรณี Error (เช่น ไฟล์ใหญ่ไป, API Key ผิด)
-        print('VT API Error: ${response.statusCode} - ${response.body}');
+        print('VT API Upload Error: ${response.statusCode} - ${response.body}');
+        return null;
+      }
+    } catch (e) {
+      print('Network Error: $e');
+      return null;
+    }
+  }
+
+  Future<String?> scanUrl(String targetUrl) async {
+    final uri = Uri.parse('https://www.virustotal.com/api/v3/urls');
+
+    try {
+      final response = await http.post(
+        uri,
+        headers: {
+          'x-apikey': _apiKey,
+          'accept': 'application/json',
+          // 💡 สำคัญ: ต้องบอก VT ว่าเรากำลังส่งข้อมูลฟอร์มแบบ Text (URL) ไปให้
+          'content-type': 'application/x-www-form-urlencoded',
+        },
+        body: {
+          'url': targetUrl, // ส่ง URL เข้าไปใน Body
+        },
+      );
+
+      if (response.statusCode == 200) {
+        // สำเร็จ! แกะเอา Analysis ID ออกมาเหมือนตอนสแกนไฟล์เลย
+        final jsonResponse = jsonDecode(response.body);
+        return jsonResponse['data']['id'];
+      } else {
+        print(
+          'VT API URL Scan Error: ${response.statusCode} - ${response.body}',
+        );
         return null;
       }
     } catch (e) {

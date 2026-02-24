@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'screens/scan_option_screen.dart';
+import 'screens/signin_screen.dart';
 import 'const/my_const.dart';
 
 void main() {
@@ -25,7 +25,7 @@ class VTScannerApp extends StatelessWidget {
           centerTitle: true,
         ),
       ),
-      home: ScanOptionScreen(),
+      home: SignInScreen(),
     );
   }
 }

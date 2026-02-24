@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../services/vt_api.dart';
 import 'analysis_loading_screen.dart';
 import '../const/my_const.dart';
 
@@ -12,6 +13,7 @@ class UrlScanScreen extends StatefulWidget {
 
 class _UrlScanScreenState extends State<UrlScanScreen> {
   final TextEditingController _urlController = TextEditingController();
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -29,36 +31,26 @@ class _UrlScanScreenState extends State<UrlScanScreen> {
         backgroundColor: vtBackground,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
-        title: const Text(
-          'URL ANALYSIS',
-          style: TextStyle(
-            color: Colors.white,
-            fontFamily: 'Courier',
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+        title: Text('URL ANALYSIS', style: textTitle),
       ),
       body: Padding(
         padding: const EdgeInsets.all(24.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               "Enter a URL, IP address, or domain to scan.",
-              style: TextStyle(color: Colors.grey, fontFamily: 'Courier'),
+              style: textDescription,
             ),
             const SizedBox(height: 30),
 
             // ช่องกรอก URL
             TextField(
               controller: _urlController,
-              style: const TextStyle(
-                color: Colors.white,
-                fontFamily: 'Courier',
-              ),
+              style: textLabel.copyWith(color: Colors.white),
               decoration: InputDecoration(
                 hintText: "https://...",
-                hintStyle: const TextStyle(color: Colors.grey),
+                hintStyle: textLabel.copyWith(color: Colors.grey, fontSize: 14),
                 filled: true,
                 fillColor: vtCard,
                 prefixIcon: const Icon(Icons.link, color: Colors.grey),
@@ -83,36 +75,74 @@ class _UrlScanScreenState extends State<UrlScanScreen> {
               width: double.infinity,
               height: 55,
               child: ElevatedButton(
-                onPressed: () {
-                  // TODO: นำ URL ไปเช็คกับ API
-                  final url = _urlController.text.trim();
-                  if (url.isNotEmpty) {
-                    // สั่งให้วิ่งไปหน้า Loading Animation พร้อมส่งค่า URL ไปให้ด้วย
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            AnalyzingScreen(targetName: url, analysisId: ''),
-                      ),
-                    );
-                  }
-                },
+                // 1. ถ้าระบบกำลังโหลดอยู่ ให้ปุ่มเป็น null (จะทำให้ปุ่มเป็นสีเทาและกดซ้ำไม่ได้)
+                onPressed: _isLoading
+                    ? null
+                    : () async {
+                        final url = _urlController.text.trim();
+
+                        if (url.isNotEmpty) {
+                          // 2. สั่งเปิดสถานะ Loading (ตัวหมุนจะโผล่ขึ้นมา)
+                          setState(() {
+                            _isLoading = true;
+                          });
+
+                          final apiService = VtApiService();
+                          String? analysisId = await apiService.scanUrl(url);
+
+                          if (context.mounted) {
+                            // 3. พอ API ตอบกลับมา ก็สั่งปิด Loading
+                            setState(() {
+                              _isLoading = false;
+                            });
+
+                            if (analysisId != null) {
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => AnalyzingScreen(
+                                    targetName: url,
+                                    analysisId: analysisId,
+                                  ),
+                                ),
+                              );
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    "Failed to scan URL. Please check the format.",
+                                  ),
+                                  backgroundColor: Colors.redAccent,
+                                ),
+                              );
+                            }
+                          }
+                        }
+                      },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: vtAccent,
+                  // ถ้าโหลดอยู่ เปลี่ยนสีปุ่มให้ดูทึบลงหน่อย
+                  backgroundColor: _isLoading ? vtCard : vtAccent,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
                 ),
-                child: const Text(
-                  "ANALYZE NOW",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontFamily: 'Courier',
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                    letterSpacing: 1,
-                  ),
-                ),
+                // 4. สลับ UI ระหว่างตัวหมุน กับ ข้อความ
+                child: _isLoading
+                    ? const SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(
+                          color: Colors.white, // ตัวหมุนสีขาว
+                          strokeWidth: 2.5,
+                        ),
+                      )
+                    : Text(
+                        "ANALYZE NOW",
+                        style: textLabel.copyWith(
+                          color: Colors.white,
+                          letterSpacing: 1,
+                        ),
+                      ),
               ),
             ),
             const SizedBox(height: 20), // เผื่อขอบจอด้านล่าง

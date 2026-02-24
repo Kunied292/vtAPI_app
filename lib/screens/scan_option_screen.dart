@@ -4,6 +4,7 @@ import 'file_scan_screen.dart';
 import 'url_scan_screen.dart';
 import 'dashboard_screen.dart';
 import 'profile_screen.dart';
+import 'setting_screen.dart';
 
 import '../const/my_const.dart';
 
@@ -44,7 +45,20 @@ class _ScanOptionScreenState extends State<ScanOptionScreen> {
           _titles[_selectedIndex], // เปลี่ยน Title ตามหน้าที่เลือก
           style: textTitle,
         ),
-        centerTitle: true,
+        actions: [
+          if (_selectedIndex == 0)
+            IconButton(
+              icon: const Icon(Icons.settings),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const SettingScreen(),
+                  ),
+                );
+              },
+            ),
+        ],
       ),
 
       // สลับ Widget ของ body ตาม Index ที่ถูกคลิก

@@ -69,8 +69,10 @@ class _AnalyzingScreenState extends State<AnalyzingScreen>
           int undetected = stats['undetected'] ?? 0;
           int harmless = stats['harmless'] ?? 0;
           int suspicious = stats['suspicious'] ?? 0;
-
           int total = malicious + undetected + harmless + suspicious;
+
+          final Map<String, dynamic> vendorResults =
+              report['data']['attributes']['results'];
 
           // เด้งไปหน้าผลลัพธ์ พร้อมส่งตัวเลขจริงไปให้
           if (mounted) {
@@ -81,6 +83,7 @@ class _AnalyzingScreenState extends State<AnalyzingScreen>
                   targetName: widget.targetName,
                   maliciousCount: malicious,
                   totalEngines: total,
+                  vendorResults: vendorResults,
                 ),
               ),
             );
@@ -151,33 +154,19 @@ class _AnalyzingScreenState extends State<AnalyzingScreen>
             const SizedBox(height: 60),
 
             // ข้อความที่เปลี่ยนไปเรื่อยๆ
-            const Text(
+            Text(
               "ANALYZING TARGET",
-              style: TextStyle(
-                color: Colors.white,
-                fontFamily: 'Courier',
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 2,
-              ),
+              style: textLabel.copyWith(fontSize: 20, letterSpacing: 2),
             ),
             const SizedBox(height: 10),
             Text(
               widget.targetName,
-              style: TextStyle(
-                color: vtAccent,
-                fontFamily: 'Courier',
-                fontSize: 14,
-              ),
+              style: textLabel.copyWith(fontSize: 14, color: vtAccent),
             ),
             const SizedBox(height: 30),
             Text(
               _statusText,
-              style: const TextStyle(
-                color: Colors.grey,
-                fontFamily: 'Courier',
-                fontSize: 12,
-              ),
+              style: textLabel.copyWith(fontSize: 12, color: Colors.grey),
             ),
           ],
         ),

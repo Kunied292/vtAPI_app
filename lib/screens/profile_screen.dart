@@ -29,13 +29,12 @@ class ProfileScreen extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     "ADMINISTRATOR",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontFamily: 'Courier',
+                    style: textLabel.copyWith(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
+                      color: Colors.white,
                       letterSpacing: 1.5,
                     ),
                   ),
@@ -49,11 +48,10 @@ class ProfileScreen extends StatelessWidget {
                       color: vtAccent.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Text(
+                    child: Text(
                       "PRO PLAN ACTIVE",
-                      style: TextStyle(
+                      style: textLabel.copyWith(
                         color: vtAccent,
-                        fontFamily: 'Courier',
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
                       ),
@@ -65,12 +63,12 @@ class ProfileScreen extends StatelessWidget {
           ),
 
           const SizedBox(height: 40),
-          const Text(
+          Text(
             "SETTINGS",
-            style: TextStyle(
+            style: textLabel.copyWith(
               color: Colors.grey,
-              fontFamily: 'Courier',
               fontSize: 14,
+              fontWeight: FontWeight.bold,
               letterSpacing: 1,
             ),
           ),
@@ -98,10 +96,9 @@ class ProfileScreen extends StatelessWidget {
               },
               icon: Icon(Icons.power_settings_new, color: vtRed),
               label: Text(
-                "DISCONNECT",
-                style: TextStyle(
+                "LOGOUT",
+                style: textLabel.copyWith(
                   color: vtRed,
-                  fontFamily: 'Courier',
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
                   letterSpacing: 1,
@@ -137,9 +134,8 @@ class ProfileScreen extends StatelessWidget {
               Expanded(
                 child: Text(
                   text,
-                  style: const TextStyle(
+                  style: textLabel.copyWith(
                     color: Colors.white,
-                    fontFamily: 'Courier',
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
                   ),
