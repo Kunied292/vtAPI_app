@@ -14,11 +14,11 @@ TextStyle textTitle = TextStyle(
   color: vtTextPrimary,
   fontFamily: GoogleFonts.jetBrainsMono().fontFamily,
   fontWeight: FontWeight.bold,
-  fontSize: 20,
+  fontSize: 24,
 );
 
 TextStyle textLabel = TextStyle(
-  color: vtTextSecondary,
+  color: vtTextPrimary,
   fontFamily: GoogleFonts.jetBrainsMono().fontFamily,
   fontWeight: FontWeight.bold,
   fontSize: 16,

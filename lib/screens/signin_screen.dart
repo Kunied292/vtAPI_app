@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
-import 'signup_screen.dart';
-import 'scan_option_screen.dart'; // เตรียมไว้สำหรับกด Login แล้วไปหน้าหลัก
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
+import 'signup_screen.dart';
+import 'scan_option_screen.dart';
+
+import '../services/auth_service.dart';
 import '../const/my_const.dart';
 
 class SignInScreen extends StatefulWidget {
@@ -12,7 +15,63 @@ class SignInScreen extends StatefulWidget {
 }
 
 class _SignInScreenState extends State<SignInScreen> {
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
   bool _obscurePassword = true;
+  bool _isLoading = false;
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _handleSignIn() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+
+    // ดักไว้ก่อนว่ากรอกครบไหม
+    if (email.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            "Please enter both email and password",
+            style: textLabel.copyWith(fontSize: 12, color: Colors.white),
+          ),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true); // เปิดตัวหมุน
+
+    // เรียกใช้ Firebase
+    final authService = AuthService();
+    final errorMessage = await authService.signInWithEmail(email, password);
+
+    if (mounted) {
+      setState(() => _isLoading = false); // ปิดตัวหมุน
+
+      if (errorMessage == null) {
+        // ล็อกอินสำเร็จ ล้างประวัติหน้า Login แล้วไปหน้า Scanner
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const ScanOptionScreen()),
+          (route) => false,
+        );
+      } else {
+        // แจ้งเตือน Error จาก Firebase (เช่น รหัสผิด, ไม่มีอีเมลนี้)
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(errorMessage),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +94,7 @@ class _SignInScreenState extends State<SignInScreen> {
                 const SizedBox(height: 8),
                 Text(
                   "Authenticate to continue to VT Scanner",
-                  style: textDescription.copyWith(fontSize: 12),
+                  style: textDescription,
                 ),
                 const SizedBox(height: 40),
 
@@ -43,13 +102,14 @@ class _SignInScreenState extends State<SignInScreen> {
                 _buildTextField(
                   hint: "Email Address",
                   icon: Icons.email_outlined,
-                  isPassword: false,
+                  controller: _emailController,
                 ),
                 const SizedBox(height: 16),
                 _buildTextField(
                   hint: "Password",
                   icon: Icons.lock_outline,
                   isPassword: true,
+                  controller: _passwordController,
                 ),
 
                 const SizedBox(height: 10),
@@ -60,7 +120,6 @@ class _SignInScreenState extends State<SignInScreen> {
                     child: Text(
                       "Forgot Password?",
                       style: textDescription.copyWith(
-                        fontSize: 13,
                         decoration: TextDecoration.underline,
                       ),
                     ),
@@ -74,33 +133,30 @@ class _SignInScreenState extends State<SignInScreen> {
                   width: double.infinity,
                   height: 55,
                   child: ElevatedButton(
-                    onPressed: () {
-                      // สมมติว่า Login สำเร็จ ให้วิ่งไปหน้า Scanner หลัก
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const ScanOptionScreen(),
-                        ),
-                      );
-                    },
+                    onPressed: _isLoading
+                        ? null
+                        : _handleSignIn, // 4. ล็อคปุ่มตอนโหลด
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: vtAccent,
+                      backgroundColor: _isLoading ? vtCard : vtAccent,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
                       ),
                     ),
-                    child: Text(
-                      "SIGN IN",
-                      style: textLabel.copyWith(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1,
-                      ),
-                    ),
+                    child: _isLoading
+                        ? const SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2.5,
+                            ),
+                          )
+                        : Text(
+                            "SIGN IN",
+                            style: textLabel.copyWith(letterSpacing: 1),
+                          ),
                   ),
                 ),
-
                 const SizedBox(height: 40),
 
                 // --- ตัวคั่น (Divider) ---
@@ -124,11 +180,11 @@ class _SignInScreenState extends State<SignInScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    _buildSocialButton(Icons.g_mobiledata, "Google"),
+                    _buildSocialButton(FontAwesomeIcons.google, " Google"),
                     const SizedBox(width: 10),
-                    _buildSocialButton(Icons.facebook, "Facebook"),
+                    _buildSocialButton(FontAwesomeIcons.facebook, " Facebook"),
                     const SizedBox(width: 10),
-                    _buildSocialButton(Icons.code, "GitHub"),
+                    _buildSocialButton(FontAwesomeIcons.github, " GitHub"),
                   ],
                 ),
 
@@ -138,10 +194,7 @@ class _SignInScreenState extends State<SignInScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(
-                      "Don't have an account?",
-                      style: textDescription.copyWith(fontSize: 12),
-                    ),
+                    Text("Don't have an account?", style: textDescription),
                     TextButton(
                       onPressed: () {
                         // กดแล้วไปหน้า Sign Up
@@ -154,10 +207,8 @@ class _SignInScreenState extends State<SignInScreen> {
                       },
                       child: Text(
                         "SIGN UP",
-                        style: textLabel.copyWith(
+                        style: textDescription.copyWith(
                           color: vtAccent,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
                           decoration: TextDecoration.underline,
                         ),
                       ),
@@ -177,13 +228,15 @@ class _SignInScreenState extends State<SignInScreen> {
     required String hint,
     required IconData icon,
     bool isPassword = false,
+    TextEditingController? controller,
   }) {
     return TextField(
+      controller: controller,
       obscureText: isPassword ? _obscurePassword : false,
-      style: textLabel.copyWith(fontSize: 16, color: Colors.white),
+      style: textDescription.copyWith(color: vtTextPrimary),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: const TextStyle(color: Colors.grey),
+        hintStyle: textDescription,
         filled: true,
         fillColor: vtCard,
         prefixIcon: Icon(icon, color: Colors.grey),

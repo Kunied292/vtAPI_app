@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "682114140757",
+    "project_id": "vtapp-419bd",
+    "storage_bucket": "vtapp-419bd.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:682114140757:android:90beed5688b5f549cb22dc",
+        "android_client_info": {
+          "package_name": "com.example.vtscanner"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAt94jX6V1P3LjqUa8RtgXF0FFhQ2nZoS0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

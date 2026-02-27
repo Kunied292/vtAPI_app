@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-
+import 'scan_option_screen.dart';
+import '../services/auth_service.dart'; // <--- Import Auth Service
 import '../const/my_const.dart';
 
 class SignUpScreen extends StatefulWidget {
@@ -10,10 +11,16 @@ class SignUpScreen extends StatefulWidget {
 }
 
 class _SignUpScreenState extends State<SignUpScreen> {
+  // 1. เพิ่ม Controllers ให้ครบทุกช่อง
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
 
   bool _obscurePassword = true;
   bool _obscureConfirm = true;
+  bool _isLoading = false; // <--- ตัวแปรสำหรับคุมปุ่มและวงแหวน Loading
 
   // ตัวแปรสำหรับเช็คความปลอดภัยของรหัสผ่าน
   bool _hasMinLength = false;
@@ -21,6 +28,17 @@ class _SignUpScreenState extends State<SignUpScreen> {
   bool _hasDigits = false;
   bool _hasSpecialChars = false;
 
+  @override
+  void dispose() {
+    // อย่าลืมเคลียร์หน่วยความจำตอนปิดหน้าจอ
+    _nameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
+  }
+
+  // ฟังก์ชันเช็คเงื่อนไขรหัสผ่าน (ทำงานทุกครั้งที่พิมพ์)
   void _validatePassword(String password) {
     setState(() {
       _hasMinLength = password.length >= 8;
@@ -30,10 +48,91 @@ class _SignUpScreenState extends State<SignUpScreen> {
     });
   }
 
-  @override
-  void dispose() {
-    _passwordController.dispose();
-    super.dispose();
+  // 2. ฟังก์ชันหลักสำหรับกดสมัครสมาชิก
+  Future<void> _handleSignUp() async {
+    final name = _nameController.text.trim();
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+    final confirmPassword = _confirmPasswordController.text.trim();
+
+    // เช็คว่ากรอกข้อมูลครบทุกช่องไหม
+    if (name.isEmpty ||
+        email.isEmpty ||
+        password.isEmpty ||
+        confirmPassword.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            "Please fill all fields",
+            style: textLabel.copyWith(fontSize: 12, color: Colors.white),
+          ),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+      return;
+    }
+
+    // เช็คว่ารหัสผ่านผ่านเกณฑ์ความปลอดภัยไหม
+    bool isPasswordValid =
+        _hasMinLength && _hasUppercase && _hasDigits && _hasSpecialChars;
+    if (!isPasswordValid) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            "Please meet all password requirements",
+            style: textLabel.copyWith(fontSize: 12, color: Colors.white),
+          ),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+      return;
+    }
+
+    // เช็คว่ารหัสผ่าน 2 ช่องตรงกันไหม
+    if (password != confirmPassword) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            "Passwords do not match",
+            style: textLabel.copyWith(fontSize: 12, color: Colors.white),
+          ),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+      return;
+    }
+
+    // ทุกอย่างผ่าน! เริ่มกระบวนการสมัคร
+    setState(() => _isLoading = true);
+
+    final authService = AuthService();
+    final errorMessage = await authService.signUpWithEmail(email, password);
+
+    // TODO: ในอนาคตคุณสามารถเอา name ไปบันทึกลง Firestore ควบคู่ไปด้วยได้
+
+    if (mounted) {
+      setState(() => _isLoading = false); // ปิดตัวโหลด
+
+      if (errorMessage == null) {
+        // สำเร็จ! พาไปหน้าสแกนไวรัส และลบประวัติการย้อนกลับ
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const ScanOptionScreen()),
+          (route) => false,
+        );
+      } else {
+        // ถ้าเกิด Error (เช่น อีเมลซ้ำ, พิมพ์ผิดรูปแบบ)
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              errorMessage,
+              style: textLabel.copyWith(fontSize: 12, color: Colors.white),
+            ),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -50,24 +149,26 @@ class _SignUpScreenState extends State<SignUpScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              "CREATE ACCOUNT",
-              style: textTitle.copyWith(fontSize: 28, letterSpacing: 1),
-            ),
+            Text("CREATE ACCOUNT", style: textTitle.copyWith(letterSpacing: 2)),
             const SizedBox(height: 8),
-            Text(
-              "Register to secure your device.",
-              style: textLabel.copyWith(fontSize: 12),
-            ),
+            Text("Register to secure your device.", style: textDescription),
             const SizedBox(height: 40),
 
-            // --- ฟอร์มกรอกข้อมูล ---
-            _buildTextField(hint: "Full Name", icon: Icons.person_outline),
-            const SizedBox(height: 16),
-            _buildTextField(hint: "Email Address", icon: Icons.email_outlined),
+            // --- ฟอร์มกรอกข้อมูล (ผูก Controller ให้ครบ) ---
+            _buildTextField(
+              hint: "Full Name",
+              icon: Icons.person_outline,
+              controller: _nameController,
+            ),
             const SizedBox(height: 16),
 
-            // ช่อง Password หลัก (ดักจับการพิมพ์ด้วย onChanged)
+            _buildTextField(
+              hint: "Email Address",
+              icon: Icons.email_outlined,
+              controller: _emailController,
+            ),
+            const SizedBox(height: 16),
+
             _buildTextField(
               hint: "Password",
               icon: Icons.lock_outline,
@@ -79,7 +180,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   setState(() => _obscurePassword = !_obscurePassword),
             ),
 
-            // --- Checklist ตรวจรหัสผ่าน (จะโผล่มาเมื่อเริ่มพิมพ์) ---
+            // --- Checklist ตรวจรหัสผ่าน ---
             if (_passwordController.text.isNotEmpty) ...[
               const SizedBox(height: 12),
               _buildPasswordCriteria("At least 8 characters", _hasMinLength),
@@ -93,11 +194,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
             const SizedBox(height: 16),
 
-            // ช่อง Confirm Password
             _buildTextField(
               hint: "Confirm Password",
               icon: Icons.lock_reset,
               isPassword: true,
+              controller: _confirmPasswordController,
               obscureState: _obscureConfirm,
               onObscureToggle: () =>
                   setState(() => _obscureConfirm = !_obscureConfirm),
@@ -110,62 +211,43 @@ class _SignUpScreenState extends State<SignUpScreen> {
               width: double.infinity,
               height: 55,
               child: ElevatedButton(
-                onPressed: () {
-                  // เช็คว่าผ่านเงื่อนไขรหัสผ่านครบไหมก่อนสมัคร
-                  bool isPasswordValid =
-                      _hasMinLength &&
-                      _hasUppercase &&
-                      _hasDigits &&
-                      _hasSpecialChars;
-                  if (!isPasswordValid) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text("Please meet all password requirements"),
-                        backgroundColor: Colors.redAccent,
-                      ),
-                    );
-                    return;
-                  }
-                  // TODO: ต่อ API สมัครสมาชิก
-                  debugPrint("Registering User...");
-                },
+                // 3. ป้องกันการกดย้ำ ถ้าโหลดอยู่ให้เป็น null
+                onPressed: _isLoading ? null : _handleSignUp,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: vtAccent,
+                  backgroundColor: _isLoading ? vtCard : vtAccent,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
                 ),
-                child: Text(
-                  "REGISTER",
-                  style: textLabel.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                    letterSpacing: 1,
-                  ),
-                ),
+                // 4. สลับหน้าตาระหว่างตัวหมุน Loading กับ ข้อความ
+                child: _isLoading
+                    ? const SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2.5,
+                        ),
+                      )
+                    : Text(
+                        "REGISTER",
+                        style: textLabel.copyWith(letterSpacing: 1),
+                      ),
               ),
             ),
 
             const SizedBox(height: 20),
 
-            // --- กลับไปหน้า Sign In ---
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(
-                  "Already have an account?",
-                  style: textDescription.copyWith(fontSize: 12),
-                ),
+                Text("Already have an account?", style: textDescription),
                 TextButton(
-                  onPressed: () =>
-                      Navigator.pop(context), // เด้งกลับไปหน้า Sign In
+                  onPressed: () => Navigator.pop(context),
                   child: Text(
                     "SIGN IN",
-                    style: textLabel.copyWith(
+                    style: textDescription.copyWith(
                       color: vtAccent,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
                       decoration: TextDecoration.underline,
                     ),
                   ),
@@ -193,10 +275,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
       controller: controller,
       onChanged: onChanged,
       obscureText: isPassword ? obscureState : false,
-      style: textLabel.copyWith(fontSize: 16, color: Colors.white),
+      style: textDescription.copyWith(color: vtTextPrimary),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: const TextStyle(color: Colors.grey),
+        hintStyle: textDescription,
         filled: true,
         fillColor: vtCard,
         prefixIcon: Icon(icon, color: Colors.grey),
@@ -221,7 +303,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
     );
   }
 
-  // Widget สร้างรายการ Checklist ตรวจรหัสผ่าน
   Widget _buildPasswordCriteria(String text, bool isMet) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 4.0, left: 10.0),
