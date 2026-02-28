@@ -65,7 +65,10 @@ class _SignInScreenState extends State<SignInScreen> {
         // แจ้งเตือน Error จาก Firebase (เช่น รหัสผิด, ไม่มีอีเมลนี้)
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(errorMessage),
+            content: Text(
+              "Email or Password is incorrect",
+              style: textLabel.copyWith(fontSize: 12, color: Colors.white),
+            ),
             backgroundColor: Colors.redAccent,
           ),
         );
@@ -116,9 +119,17 @@ class _SignInScreenState extends State<SignInScreen> {
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ScanOptionScreen(),
+                        ),
+                        (route) => false,
+                      );
+                    },
                     child: Text(
-                      "Forgot Password?",
+                      "Guest Account",
                       style: textDescription.copyWith(
                         decoration: TextDecoration.underline,
                       ),

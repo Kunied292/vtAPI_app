@@ -1,15 +1,32 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _db = FirebaseFirestore.instance;
 
   // 1. สมัครสมาชิก (Sign Up)
-  Future<String?> signUpWithEmail(String email, String password) async {
+  Future<String?> signUpWithEmail(
+    String name,
+    String email,
+    String password,
+  ) async {
     try {
-      await _auth.createUserWithEmailAndPassword(
-        email: email.trim(),
-        password: password.trim(),
-      );
+      UserCredential userCredential = await _auth
+          .createUserWithEmailAndPassword(
+            email: email.trim(),
+            password: password.trim(),
+          );
+      User? user = userCredential.user;
+      if (user != null) {
+        // ใช้ .set() แทน .add() เพราะเราอยากบังคับให้ Document ID ตรงกับ UID ของ Auth เป๊ะๆ
+        await _db.collection('users').doc(user.uid).set({
+          'name': name.trim(),
+          'email': email.trim(),
+          'createdAt': FieldValue.serverTimestamp(), // เก็บเวลาที่สมัคร
+          'role': 'user', // (Optional) เผื่ออนาคตทำระบบ Admin
+        });
+      }
       return null; // ถ้าสำเร็จ ให้ return null (ไม่มี Error)
     } on FirebaseAuthException catch (e) {
       // ดักจับ Error แจ้งเตือนผู้ใช้

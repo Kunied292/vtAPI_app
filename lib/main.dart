@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
-
-import 'screens/signin_screen.dart';
+import 'screens/scan_option_screen.dart';
+//import 'screens/signin_screen.dart';
 import 'const/my_const.dart';
 
 void main() async {
@@ -29,7 +29,7 @@ class VTScannerApp extends StatelessWidget {
           centerTitle: true,
         ),
       ),
-      home: SignInScreen(),
+      home: ScanOptionScreen(),
     );
   }
 }

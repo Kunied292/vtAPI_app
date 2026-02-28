@@ -3,6 +3,7 @@ import 'dart:async';
 import 'result_screen.dart';
 import '../const/my_const.dart';
 import '../services/vt_api.dart';
+import '../services/firestore_service.dart';
 
 class AnalyzingScreen extends StatefulWidget {
   final String targetName; // รับชื่อไฟล์ หรือ URL มาเพื่อแสดงบนจอ
@@ -70,6 +71,19 @@ class _AnalyzingScreenState extends State<AnalyzingScreen>
           int harmless = stats['harmless'] ?? 0;
           int suspicious = stats['suspicious'] ?? 0;
           int total = malicious + undetected + harmless + suspicious;
+
+          final bool isSafe = malicious == 0;
+          // เช็คแบบง่ายๆ ว่าเป็น URL หรือ File (ถ้าขึ้นต้นด้วย http ให้ถือว่าเป็น url)
+          final String type = widget.targetName.startsWith('http')
+              ? 'url'
+              : 'file';
+
+          // สั่งบันทึกโดยไม่ต้องรอ (ไม่ต้องใส่ await) เพื่อความรวดเร็วของ UX
+          FirestoreService().saveScanResult(
+            targetName: widget.targetName,
+            isSafe: isSafe,
+            scanType: type,
+          );
 
           final Map<String, dynamic> vendorResults =
               report['data']['attributes']['results'];

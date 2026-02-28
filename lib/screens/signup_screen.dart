@@ -106,9 +106,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
     setState(() => _isLoading = true);
 
     final authService = AuthService();
-    final errorMessage = await authService.signUpWithEmail(email, password);
-
-    // TODO: ในอนาคตคุณสามารถเอา name ไปบันทึกลง Firestore ควบคู่ไปด้วยได้
+    final errorMessage = await authService.signUpWithEmail(
+      name,
+      email,
+      password,
+    );
 
     if (mounted) {
       setState(() => _isLoading = false); // ปิดตัวโหลด

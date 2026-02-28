@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import '../services/firestore_service.dart';
 import '../const/my_const.dart';
 
 class DashboardScreen extends StatelessWidget {
@@ -11,11 +14,9 @@ class DashboardScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             "SECURITY OVERVIEW",
-            style: TextStyle(
-              color: Colors.white,
-              fontFamily: 'Courier',
+            style: textLabel.copyWith(
               fontSize: 18,
               fontWeight: FontWeight.bold,
               letterSpacing: 2,
@@ -23,38 +24,109 @@ class DashboardScreen extends StatelessWidget {
           ),
           const SizedBox(height: 20),
 
-          // สรุปสถิติ (Stats Row)
-          Row(
-            children: [
-              Expanded(child: _buildStatCard("SCANNED", "128", vtAccent)),
-              const SizedBox(width: 15),
-              Expanded(child: _buildStatCard("CLEAN", "120", vtGreen)),
-              const SizedBox(width: 15),
-              Expanded(child: _buildStatCard("THREATS", "8", vtRed)),
-            ],
-          ),
-
-          const SizedBox(height: 40),
-          const Text(
-            "RECENT ACTIVITY",
-            style: TextStyle(
-              color: Colors.grey,
-              fontFamily: 'Courier',
-              fontSize: 14,
-              letterSpacing: 1,
-            ),
-          ),
-          const SizedBox(height: 15),
-
-          // รายการประวัติการสแกนล่าสุด
+          // 💡 ใช้ StreamBuilder ดึงข้อมูลจาก Firestore แบบ Real-time
           Expanded(
-            child: ListView(
-              children: [
-                _buildHistoryItem("system_update.apk", "Safe", true),
-                _buildHistoryItem("http://free-movies.xyz", "Malicious", false),
-                _buildHistoryItem("invoice_document.pdf", "Safe", true),
-                _buildHistoryItem("crack_wifi.exe", "Malicious", false),
-              ],
+            child: StreamBuilder<QuerySnapshot>(
+              stream: FirestoreService().getUserHistoryStream(),
+              builder: (context, snapshot) {
+                // 1. ระหว่างรอโหลด
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                // 2. ถ้ามี Error หรือไม่ได้ล็อกอิน
+                if (snapshot.hasError ||
+                    !snapshot.hasData ||
+                    snapshot.data!.docs.isEmpty) {
+                  return Center(
+                    child: Text(
+                      "No scan history found.\nSign in and start scanning!",
+                      textAlign: TextAlign.center,
+                      style: textDescription,
+                    ),
+                  );
+                }
+
+                // 3. ดึงข้อมูลสำเร็จ! นำมาคำนวณสถิติ
+                final docs = snapshot.data!.docs;
+                int totalScans = docs.length;
+                int cleanCount = 0;
+                int threatCount = 0;
+
+                for (var doc in docs) {
+                  final data = doc.data() as Map<String, dynamic>;
+                  if (data['isSafe'] == true) {
+                    cleanCount++;
+                  } else {
+                    threatCount++;
+                  }
+                }
+
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // --- สรุปสถิติ (Stats Row) ---
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildStatCard(
+                            "SCANNED",
+                            totalScans.toString(),
+                            vtAccent,
+                          ),
+                        ),
+                        const SizedBox(width: 15),
+                        Expanded(
+                          child: _buildStatCard(
+                            "CLEAN",
+                            cleanCount.toString(),
+                            vtGreen,
+                          ),
+                        ),
+                        const SizedBox(width: 15),
+                        Expanded(
+                          child: _buildStatCard(
+                            "THREATS",
+                            threatCount.toString(),
+                            vtRed,
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 40),
+                    Text(
+                      "RECENT ACTIVITY",
+                      style: textDescription.copyWith(
+                        fontSize: 14,
+                        letterSpacing: 1,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 15),
+
+                    // --- รายการประวัติ (History List) ---
+                    Expanded(
+                      child: ListView.builder(
+                        itemCount: docs.length,
+                        itemBuilder: (context, index) {
+                          final data =
+                              docs[index].data() as Map<String, dynamic>;
+                          final targetName = data['targetName'] ?? 'Unknown';
+                          final isSafe = data['isSafe'] ?? false;
+                          final statusText = isSafe ? 'CLEAN' : 'MALICIOUS';
+
+                          return _buildHistoryItem(
+                            targetName,
+                            statusText,
+                            isSafe,
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                );
+              },
             ),
           ),
         ],
@@ -62,7 +134,7 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  // Widget สร้างกล่องสถิติ
+  // (Widget ย่อยด้านล่างนี้เหมือนเดิมเป๊ะครับ)
   Widget _buildStatCard(String title, String value, Color color) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 20),
@@ -75,9 +147,8 @@ class DashboardScreen extends StatelessWidget {
         children: [
           Text(
             value,
-            style: TextStyle(
+            style: textLabel.copyWith(
               color: color,
-              fontFamily: 'Courier',
               fontSize: 24,
               fontWeight: FontWeight.bold,
             ),
@@ -85,9 +156,8 @@ class DashboardScreen extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             title,
-            style: const TextStyle(
+            style: textDescription.copyWith(
               color: Colors.grey,
-              fontFamily: 'Courier',
               fontSize: 10,
               fontWeight: FontWeight.bold,
             ),
@@ -97,7 +167,6 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  // Widget สร้างรายการประวัติ
   Widget _buildHistoryItem(String name, String status, bool isSafe) {
     final color = isSafe ? vtGreen : vtRed;
     return Container(
@@ -110,7 +179,7 @@ class DashboardScreen extends StatelessWidget {
       child: Row(
         children: [
           Icon(
-            isSafe ? Icons.check_circle : Icons.warning,
+            isSafe ? FontAwesomeIcons.shield : FontAwesomeIcons.shieldHalved,
             color: color,
             size: 24,
           ),
@@ -121,9 +190,8 @@ class DashboardScreen extends StatelessWidget {
               children: [
                 Text(
                   name,
-                  style: const TextStyle(
+                  style: textLabel.copyWith(
                     color: Colors.white,
-                    fontFamily: 'Courier',
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
                   ),
@@ -131,17 +199,16 @@ class DashboardScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  status.toUpperCase(),
-                  style: TextStyle(
+                  status,
+                  style: textDescription.copyWith(
                     color: color,
-                    fontFamily: 'Courier',
                     fontSize: 10,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ],
             ),
           ),
-          const Icon(Icons.arrow_forward_ios, color: Colors.grey, size: 14),
         ],
       ),
     );
