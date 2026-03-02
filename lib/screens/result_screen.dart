@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../const/my_const.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-class ResultScreen extends StatelessWidget {
+class ResultScreen extends StatefulWidget {
   final String targetName;
   final int maliciousCount;
   final int totalEngines;
@@ -16,8 +16,26 @@ class ResultScreen extends StatelessWidget {
     required this.vendorResults,
   });
 
+  @override
+  State<ResultScreen> createState() => _ResultScreenState();
+}
+
+class _ResultScreenState extends State<ResultScreen> {
   final Color vtGrey =
       Colors.grey; // เพิ่มสีเทาสำหรับสถานะที่ไม่สามารถประมวลผลได้
+  late List<String> _sortedVendorNames;
+
+  @override
+  void initState() {
+    super.initState();
+    _sortedVendorNames = widget.vendorResults.keys.toList();
+    _sortedVendorNames.sort((a, b) {
+      final pA = _getPriority(widget.vendorResults[a]['category']);
+      final pB = _getPriority(widget.vendorResults[b]['category']);
+      if (pA != pB) return pA.compareTo(pB); // เรียงตามความสำคัญ
+      return a.compareTo(b); // ถ้าความสำคัญเท่ากัน เรียงตามตัวอักษร A-Z
+    });
+  }
 
   // ฟังก์ชันจัดความสำคัญ (แดงอยู่บน -> เขียวตรงกลาง -> เทาอยู่ล่างสุด)
   int _getPriority(String? category) {
@@ -28,20 +46,11 @@ class ResultScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isSafe = maliciousCount == 0;
+    final bool isSafe = widget.maliciousCount == 0;
     final Color statusColor = isSafe ? vtGreen : vtRed;
     final IconData statusIcon = isSafe ? Icons.verified_user : Icons.gpp_bad;
     final String statusText = isSafe ? "CLEAN" : "MALICIOUS";
-    final String score = "$maliciousCount / $totalEngines";
-
-    // จัดเตรียมและเรียงลำดับข้อมูล Vendor
-    final vendorNames = vendorResults.keys.toList();
-    vendorNames.sort((a, b) {
-      final pA = _getPriority(vendorResults[a]['category']);
-      final pB = _getPriority(vendorResults[b]['category']);
-      if (pA != pB) return pA.compareTo(pB); // เรียงตามความสำคัญ
-      return a.compareTo(b); // ถ้าความสำคัญเท่ากัน เรียงตามตัวอักษร A-Z
-    });
+    final String score = "${widget.maliciousCount} / ${widget.totalEngines}";
 
     return Scaffold(
       backgroundColor: vtBackground,
@@ -101,10 +110,10 @@ class ResultScreen extends StatelessWidget {
             // --- ลิสต์ผลการสแกนที่แยก 3 สถานะแล้ว ---
             Expanded(
               child: ListView.builder(
-                itemCount: vendorNames.length,
+                itemCount: _sortedVendorNames.length,
                 itemBuilder: (context, index) {
-                  final vendorName = vendorNames[index];
-                  final resultData = vendorResults[vendorName];
+                  final vendorName = _sortedVendorNames[index];
+                  final resultData = widget.vendorResults[vendorName];
 
                   final String category = resultData['category'] ?? 'unknown';
                   final String? malwareName = resultData['result'];

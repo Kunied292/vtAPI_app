@@ -34,7 +34,7 @@ class _FileScanScreenState extends State<FileScanScreen> {
     String fileName = result.files.single.name;
 
     final apiService = VtApiService();
-    String? analysisId = await apiService.uploadFileForScan(filePath);
+    final resultOrFailure = await apiService.uploadFileForScan(filePath);
 
     if (mounted) {
       // 4. ไม่ว่าจะสำเร็จหรือพัง ก็ต้องสั่งปิด Loading
@@ -42,24 +42,27 @@ class _FileScanScreenState extends State<FileScanScreen> {
         _isLoading = false;
       });
 
-      if (analysisId != null) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) =>
-                AnalyzingScreen(targetName: fileName, analysisId: analysisId),
-          ),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              "Upload failed. File might be too large or API error.",
+      resultOrFailure.fold(
+        (failure) {
+          // กรณีล้มเหลว (Left)
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(failure.message),
+              backgroundColor: Colors.redAccent,
             ),
-            backgroundColor: Colors.redAccent,
-          ),
-        );
-      }
+          );
+        },
+        (analysisId) {
+          // กรณีสำเร็จ (Right)
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) =>
+                  AnalyzingScreen(targetName: fileName, analysisId: analysisId),
+            ),
+          );
+        },
+      );
     }
   }
 

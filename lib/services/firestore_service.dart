@@ -10,6 +10,9 @@ class FirestoreService {
     required String targetName,
     required bool isSafe,
     required String scanType, // ใส่ค่า 'url' หรือ 'file'
+    Map<String, dynamic>? vendorResults,
+    int? maliciousCount,
+    int? totalEngines,
   }) async {
     final user = _auth.currentUser;
     // ถ้าเป็น Guest (ไม่ได้ล็อกอิน) ก็ไม่ต้องทำอะไร ปล่อยผ่านไปเลย
@@ -26,6 +29,9 @@ class FirestoreService {
             'isSafe': isSafe,
             'scanType': scanType,
             'timestamp': FieldValue.serverTimestamp(), // ประทับเวลาจาก Server
+            'vendorResults': vendorResults, // อาจจะ null สำหรับสแกนเก่าๆ
+            'maliciousCount': maliciousCount,
+            'totalEngines': totalEngines,
           });
       print("History saved to cloud!");
     } catch (e) {
@@ -34,16 +40,16 @@ class FirestoreService {
   }
 
   // 2. ฟังก์ชันดึงประวัติแบบ Real-time (ใช้ในหน้า Dashboard)
-  Stream<QuerySnapshot> getUserHistoryStream() {
+  Stream<QuerySnapshot> getUserHistoryStream({bool descending = true}) {
     final user = _auth.currentUser;
     if (user == null) return const Stream.empty();
 
-    // ดึงข้อมูลเรียงจากล่าสุด (descending: true) ไปหาเก่าสุด
+    // ดึงข้อมูลเรียงลำดับตามตัวแปร descending
     return _db
         .collection('users')
         .doc(user.uid)
         .collection('scan_history')
-        .orderBy('timestamp', descending: true)
+        .orderBy('timestamp', descending: descending)
         .snapshots();
   }
 }

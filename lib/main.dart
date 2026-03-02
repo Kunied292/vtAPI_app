@@ -4,10 +4,12 @@ import 'firebase_options.dart';
 import 'screens/scan_option_screen.dart';
 //import 'screens/signin_screen.dart';
 import 'const/my_const.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await dotenv.load(fileName: ".env");
   runApp(const VTScannerApp());
 }
 

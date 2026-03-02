@@ -55,60 +55,82 @@ class _AnalyzingScreenState extends State<AnalyzingScreen>
       await Future.delayed(const Duration(seconds: 5));
       if (!mounted) return; // ถ้าผู้ใช้กดปิดหน้าไปแล้ว ให้หยุดทำงาน
 
-      final report = await apiService.getAnalysisReport(widget.analysisId);
+      final reportOrFailure = await apiService.getAnalysisReport(
+        widget.analysisId,
+      );
 
-      if (report != null) {
-        // แกะสถานะปัจจุบันออกมาดู (queued, in-progress, completed)
-        final status = report['data']['attributes']['status'];
-
-        if (status == 'completed') {
-          isCompleted = true; // ออกจากลูป while
-
-          // ดึงสถิติออกมา
-          final stats = report['data']['attributes']['stats'];
-          int malicious = stats['malicious'] ?? 0;
-          int undetected = stats['undetected'] ?? 0;
-          int harmless = stats['harmless'] ?? 0;
-          int suspicious = stats['suspicious'] ?? 0;
-          int total = malicious + undetected + harmless + suspicious;
-
-          final bool isSafe = malicious == 0;
-          // เช็คแบบง่ายๆ ว่าเป็น URL หรือ File (ถ้าขึ้นต้นด้วย http ให้ถือว่าเป็น url)
-          final String type = widget.targetName.startsWith('http')
-              ? 'url'
-              : 'file';
-
-          // สั่งบันทึกโดยไม่ต้องรอ (ไม่ต้องใส่ await) เพื่อความรวดเร็วของ UX
-          FirestoreService().saveScanResult(
-            targetName: widget.targetName,
-            isSafe: isSafe,
-            scanType: type,
-          );
-
-          final Map<String, dynamic> vendorResults =
-              report['data']['attributes']['results'];
-
-          // เด้งไปหน้าผลลัพธ์ พร้อมส่งตัวเลขจริงไปให้
+      reportOrFailure.fold(
+        (failure) {
+          // ถ้าเกิด Failure ให้หยุดการรัน loop และแสดง Error กลับไปหน้าก่อน
+          isCompleted = true;
           if (mounted) {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (context) => ResultScreen(
-                  targetName: widget.targetName,
-                  maliciousCount: malicious,
-                  totalEngines: total,
-                  vendorResults: vendorResults,
-                ),
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Report Error: ${failure.message}'),
+                backgroundColor: Colors.redAccent,
               ),
             );
+            Navigator.pop(context);
           }
-        } else {
-          // ถ้ายังไม่เสร็จ ให้อัปเดตข้อความบนหน้าจอเรื่อยๆ
-          setState(() {
-            _statusText = "STATUS: ${status.toUpperCase()}...";
-          });
-        }
-      }
+        },
+        (report) {
+          // แกะสถานะปัจจุบันออกมาดู (queued, in-progress, completed)
+          final status = report['data']['attributes']['status'];
+
+          if (status == 'completed') {
+            isCompleted = true; // ออกจากลูป while
+
+            // ดึงสถิติออกมา
+            final stats = report['data']['attributes']['stats'];
+            int malicious = stats['malicious'] ?? 0;
+            int undetected = stats['undetected'] ?? 0;
+            int harmless = stats['harmless'] ?? 0;
+            int suspicious = stats['suspicious'] ?? 0;
+            int total = malicious + undetected + harmless + suspicious;
+
+            final bool isSafe = malicious == 0;
+            // เช็คแบบง่ายๆ ว่าเป็น URL หรือ File (ถ้าขึ้นต้นด้วย http ให้ถือว่าเป็น url)
+            final String type = widget.targetName.startsWith('http')
+                ? 'url'
+                : 'file';
+
+            final Map<String, dynamic> vendorResults =
+                report['data']['attributes']['results'];
+
+            // สั่งบันทึกโดยไม่ต้องรอ (ไม่ต้องใส่ await) เพื่อความรวดเร็วของ UX
+            FirestoreService().saveScanResult(
+              targetName: widget.targetName,
+              isSafe: isSafe,
+              scanType: type,
+              vendorResults: vendorResults,
+              maliciousCount: malicious,
+              totalEngines: total,
+            );
+
+            // เด้งไปหน้าผลลัพธ์ พร้อมส่งตัวเลขจริงไปให้
+            if (mounted) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ResultScreen(
+                    targetName: widget.targetName,
+                    maliciousCount: malicious,
+                    totalEngines: total,
+                    vendorResults: vendorResults,
+                  ),
+                ),
+              );
+            }
+          } else {
+            // ถ้ายังไม่เสร็จ ให้อัปเดตข้อความบนหน้าจอเรื่อยๆ
+            if (mounted) {
+              setState(() {
+                _statusText = "STATUS: ${status.toUpperCase()}...";
+              });
+            }
+          }
+        },
+      );
     }
   }
 

@@ -88,7 +88,7 @@ class _UrlScanScreenState extends State<UrlScanScreen> {
                           });
 
                           final apiService = VtApiService();
-                          String? analysisId = await apiService.scanUrl(url);
+                          final resultOrFailure = await apiService.scanUrl(url);
 
                           if (context.mounted) {
                             // 3. พอ API ตอบกลับมา ก็สั่งปิด Loading
@@ -96,26 +96,27 @@ class _UrlScanScreenState extends State<UrlScanScreen> {
                               _isLoading = false;
                             });
 
-                            if (analysisId != null) {
-                              Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => AnalyzingScreen(
-                                    targetName: url,
-                                    analysisId: analysisId,
+                            resultOrFailure.fold(
+                              (failure) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(failure.message),
+                                    backgroundColor: Colors.redAccent,
                                   ),
-                                ),
-                              );
-                            } else {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    "Failed to scan URL. Please check the format.",
+                                );
+                              },
+                              (analysisId) {
+                                Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => AnalyzingScreen(
+                                      targetName: url,
+                                      analysisId: analysisId,
+                                    ),
                                   ),
-                                  backgroundColor: Colors.redAccent,
-                                ),
-                              );
-                            }
+                                );
+                              },
+                            );
                           }
                         }
                       },
