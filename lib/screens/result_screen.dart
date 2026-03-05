@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../const/my_const.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../widgets/custom_app_bar_widget.dart';
 
 class ResultScreen extends StatefulWidget {
   final String targetName;
@@ -54,17 +55,14 @@ class _ResultScreenState extends State<ResultScreen> {
 
     return Scaffold(
       backgroundColor: vtBackground,
-      appBar: AppBar(
-        backgroundColor: vtBackground,
-        elevation: 0,
+      appBar: CustomAppBar(
+        title: '',
         automaticallyImplyLeading: false,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.close, color: Colors.white),
-            onPressed: () =>
-                Navigator.popUntil(context, (route) => route.isFirst),
-          ),
-        ],
+        trailing: IconButton(
+          icon: const Icon(Icons.close, color: Colors.white),
+          onPressed: () =>
+              Navigator.popUntil(context, (route) => route.isFirst),
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(24.0),

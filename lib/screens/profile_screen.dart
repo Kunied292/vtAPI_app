@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'signin_screen.dart';
 import '../const/my_const.dart';
+import '../widgets/vt_primary_button_widget.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -130,7 +131,7 @@ class ProfileScreen extends StatelessWidget {
           ),
 
           const SizedBox(height: 40),
-          Text("SETTINGS", style: textDescription),
+          Text("PREFERENCES", style: textDescription),
           const SizedBox(height: 15),
 
           _buildMenuRow(
@@ -158,7 +159,9 @@ class ProfileScreen extends StatelessWidget {
             width: double.infinity,
             height: 55,
             child: isGuest
-                ? ElevatedButton.icon(
+                ? VTPrimaryButton(
+                    text: "SIGN IN TO UNLOCK FEATURES",
+                    textColor: Colors.white,
                     onPressed: () {
                       Navigator.push(
                         context,
@@ -167,23 +170,6 @@ class ProfileScreen extends StatelessWidget {
                         ),
                       );
                     },
-                    icon: const Icon(
-                      FontAwesomeIcons.arrowRightToBracket,
-                      color: Colors.white,
-                    ),
-                    label: Text(
-                      "SIGN IN TO UNLOCK FEATURES",
-                      style: textLabel.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: vtAccent,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                    ),
                   )
                 : OutlinedButton.icon(
                     onPressed: () async {

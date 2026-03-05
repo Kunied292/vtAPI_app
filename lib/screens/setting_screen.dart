@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../const/my_const.dart';
+import '../widgets/custom_app_bar_widget.dart';
 
 class SettingScreen extends StatelessWidget {
   const SettingScreen({super.key});
@@ -6,8 +8,9 @@ class SettingScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Settings')),
-      body: const Center(child: Text('Settings')),
+      backgroundColor: vtBackground,
+      appBar: const CustomAppBar(title: 'SETTINGS'),
+      body: Center(child: Text('under development', style: textDescription)),
     );
   }
 }

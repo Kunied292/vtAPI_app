@@ -4,6 +4,7 @@ import 'result_screen.dart';
 import '../const/my_const.dart';
 import '../services/vt_api.dart';
 import '../services/firestore_service.dart';
+import '../models/scan_history_model.dart';
 
 class AnalyzingScreen extends StatefulWidget {
   final String targetName; // รับชื่อไฟล์ หรือ URL มาเพื่อแสดงบนจอ
@@ -98,14 +99,27 @@ class _AnalyzingScreenState extends State<AnalyzingScreen>
                 report['data']['attributes']['results'];
 
             // สั่งบันทึกโดยไม่ต้องรอ (ไม่ต้องใส่ await) เพื่อความรวดเร็วของ UX
-            FirestoreService().saveScanResult(
-              targetName: widget.targetName,
-              isSafe: isSafe,
-              scanType: type,
-              vendorResults: vendorResults,
-              maliciousCount: malicious,
-              totalEngines: total,
-            );
+            // แต่เนื่องจากตอนนี้ return เป็น Either เราสามารถแกะค่าได้
+            FirestoreService()
+                .saveScanResult(
+                  ScanHistoryModel(
+                    id: '', // Firestore sets the ID, we don't know it yet
+                    targetName: widget.targetName,
+                    isSafe: isSafe,
+                    scanType: type,
+                    timestamp: DateTime.now(),
+                    vendorResults: vendorResults,
+                    maliciousCount: malicious,
+                    totalEngines: total,
+                  ),
+                )
+                .then((result) {
+                  result.fold(
+                    (failure) =>
+                        print("Failed to save history: ${failure.message}"),
+                    (_) => print("History saved successfully."),
+                  );
+                });
 
             // เด้งไปหน้าผลลัพธ์ พร้อมส่งตัวเลขจริงไปให้
             if (mounted) {
@@ -162,8 +176,8 @@ class _AnalyzingScreenState extends State<AnalyzingScreen>
                       height: 100 * _pulseAnimation.value,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: vtAccent.withOpacity(
-                          0.2 / _pulseAnimation.value,
+                        color: vtAccent.withValues(
+                          alpha: 0.2 / _pulseAnimation.value,
                         ), // ยิ่งกว้างยิ่งจาง
                       ),
                     ),

@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../services/vt_api.dart';
 import 'analysis_loading_screen.dart';
 import '../const/my_const.dart';
+import '../widgets/custom_app_bar_widget.dart';
+import '../widgets/vt_primary_button_widget.dart';
 
 class UrlScanScreen extends StatefulWidget {
   const UrlScanScreen({super.key});
@@ -27,12 +29,7 @@ class _UrlScanScreenState extends State<UrlScanScreen> {
       backgroundColor: vtBackground,
       // บังคับไม่ให้คีย์บอร์ดดันหน้าจอเละ
       resizeToAvoidBottomInset: false,
-      appBar: AppBar(
-        backgroundColor: vtBackground,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.white),
-        title: Text('URL ANALYSIS', style: textTitle),
-      ),
+      appBar: const CustomAppBar(title: 'URL ANALYSIS'),
       body: Padding(
         padding: const EdgeInsets.all(24.0),
         child: Column(
@@ -71,80 +68,51 @@ class _UrlScanScreenState extends State<UrlScanScreen> {
             const Spacer(),
 
             // ปุ่มเริ่มสแกน (อยู่ล่างสุด)
-            SizedBox(
-              width: double.infinity,
-              height: 55,
-              child: ElevatedButton(
-                // 1. ถ้าระบบกำลังโหลดอยู่ ให้ปุ่มเป็น null (จะทำให้ปุ่มเป็นสีเทาและกดซ้ำไม่ได้)
-                onPressed: _isLoading
-                    ? null
-                    : () async {
-                        final url = _urlController.text.trim();
+            VTPrimaryButton(
+              text: "ANALYZE NOW",
+              isLoading: _isLoading,
+              onPressed: () async {
+                final url = _urlController.text.trim();
 
-                        if (url.isNotEmpty) {
-                          // 2. สั่งเปิดสถานะ Loading (ตัวหมุนจะโผล่ขึ้นมา)
-                          setState(() {
-                            _isLoading = true;
-                          });
+                if (url.isNotEmpty) {
+                  // 2. สั่งเปิดสถานะ Loading (ตัวหมุนจะโผล่ขึ้นมา)
+                  setState(() {
+                    _isLoading = true;
+                  });
 
-                          final apiService = VtApiService();
-                          final resultOrFailure = await apiService.scanUrl(url);
+                  final apiService = VtApiService();
+                  final resultOrFailure = await apiService.scanUrl(url);
 
-                          if (context.mounted) {
-                            // 3. พอ API ตอบกลับมา ก็สั่งปิด Loading
-                            setState(() {
-                              _isLoading = false;
-                            });
+                  if (context.mounted) {
+                    // 3. พอ API ตอบกลับมา ก็สั่งปิด Loading
+                    setState(() {
+                      _isLoading = false;
+                    });
 
-                            resultOrFailure.fold(
-                              (failure) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(failure.message),
-                                    backgroundColor: Colors.redAccent,
-                                  ),
-                                );
-                              },
-                              (analysisId) {
-                                Navigator.pushReplacement(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => AnalyzingScreen(
-                                      targetName: url,
-                                      analysisId: analysisId,
-                                    ),
-                                  ),
-                                );
-                              },
-                            );
-                          }
-                        }
+                    resultOrFailure.fold(
+                      (failure) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(failure.message),
+                            backgroundColor: Colors.redAccent,
+                          ),
+                        );
                       },
-                style: ElevatedButton.styleFrom(
-                  // ถ้าโหลดอยู่ เปลี่ยนสีปุ่มให้ดูทึบลงหน่อย
-                  backgroundColor: _isLoading ? vtCard : vtAccent,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                ),
-                // 4. สลับ UI ระหว่างตัวหมุน กับ ข้อความ
-                child: _isLoading
-                    ? const SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(
-                          color: Colors.white, // ตัวหมุนสีขาว
-                          strokeWidth: 2.5,
-                        ),
-                      )
-                    : Text(
-                        "ANALYZE NOW",
-                        style: textLabel.copyWith(
-                          color: Colors.white,
-                          letterSpacing: 1,
-                        ),
-                      ),
-              ),
+                      (analysisId) {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => AnalyzingScreen(
+                              targetName: url,
+                              analysisId: analysisId,
+                            ),
+                          ),
+                        );
+                      },
+                    );
+                  }
+                }
+              },
             ),
             const SizedBox(height: 20), // เผื่อขอบจอด้านล่าง
           ],

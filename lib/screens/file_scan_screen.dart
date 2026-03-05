@@ -3,6 +3,7 @@ import 'package:file_picker/file_picker.dart';
 import '../services/vt_api.dart';
 import 'analysis_loading_screen.dart';
 import '../const/my_const.dart';
+import '../widgets/custom_app_bar_widget.dart';
 
 // 1. เปลี่ยนจาก StatelessWidget เป็น StatefulWidget
 class FileScanScreen extends StatefulWidget {
@@ -70,12 +71,7 @@ class _FileScanScreenState extends State<FileScanScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: vtBackground,
-      appBar: AppBar(
-        backgroundColor: vtBackground,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.white),
-        title: Text('FILE UPLOAD', style: textTitle),
-      ),
+      appBar: const CustomAppBar(title: 'FILE UPLOAD'),
       body: Padding(
         padding: const EdgeInsets.all(24.0),
         child: Column(

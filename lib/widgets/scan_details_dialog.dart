@@ -1,31 +1,27 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import '../const/my_const.dart';
+import '../models/scan_history_model.dart';
 
-void showScanDetailsDialog(BuildContext context, Map<String, dynamic> data) {
-  final targetName = data['targetName'] ?? 'Unknown';
-  final isSafe = data['isSafe'] ?? false;
-  final scanType = data['scanType'] == 'url' ? 'URL' : 'FILE';
+void showScanDetailsDialog(BuildContext context, ScanHistoryModel data) {
+  final targetName = data.targetName;
+  final isSafe = data.isSafe;
+  final scanType = data.scanType == 'url' ? 'URL' : 'FILE';
   final statusColor = isSafe ? vtGreen : vtRed;
   final statusIcon = isSafe ? Icons.verified_user : Icons.gpp_bad;
   final statusText = isSafe ? "CLEAN" : "MALICIOUS";
 
   // จัดการเวลา
-  final Timestamp? timestamp = data['timestamp'];
-  String formattedDate = "Unknown Date";
-  if (timestamp != null) {
-    final date = timestamp.toDate();
-    // จัดรูปแบบคร่าวๆ: DD/MM/YYYY HH:MM
-    formattedDate =
-        "${date.day}/${date.month}/${date.year} ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}";
-  }
+  final date = data.timestamp;
+  // จัดรูปแบบคร่าวๆ: DD/MM/YYYY HH:MM
+  final formattedDate =
+      "${date.day}/${date.month}/${date.year} ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}";
 
   // ข้อมูลแบบละเอียดจาก Firestore
-  final int? maliciousCount = data['maliciousCount'];
-  final int? totalEngines = data['totalEngines'];
-  final Map<String, dynamic>? vendorResults = data['vendorResults'];
+  final int maliciousCount = data.maliciousCount;
+  final int totalEngines = data.totalEngines;
+  final Map<String, dynamic>? vendorResults = data.vendorResults;
 
-  final bool hasDetailedData = maliciousCount != null && vendorResults != null;
+  final bool hasDetailedData = totalEngines > 0 && vendorResults != null;
 
   showDialog(
     context: context,

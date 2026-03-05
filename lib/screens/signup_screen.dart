@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'scan_option_screen.dart';
 import '../services/auth_service.dart'; // <--- Import Auth Service
 import '../const/my_const.dart';
+import '../widgets/custom_app_bar_widget.dart';
+import '../widgets/vt_primary_button_widget.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -106,7 +108,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     setState(() => _isLoading = true);
 
     final authService = AuthService();
-    final errorMessage = await authService.signUpWithEmail(
+    final resultOrFailure = await authService.signUpWithEmail(
       name,
       email,
       password,
@@ -115,25 +117,28 @@ class _SignUpScreenState extends State<SignUpScreen> {
     if (mounted) {
       setState(() => _isLoading = false); // ปิดตัวโหลด
 
-      if (errorMessage == null) {
-        // สำเร็จ! พาไปหน้าสแกนไวรัส และลบประวัติการย้อนกลับ
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (context) => const ScanOptionScreen()),
-          (route) => false,
-        );
-      } else {
-        // ถ้าเกิด Error (เช่น อีเมลซ้ำ, พิมพ์ผิดรูปแบบ)
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              errorMessage,
-              style: textLabel.copyWith(fontSize: 12, color: Colors.white),
+      resultOrFailure.fold(
+        (failure) {
+          // ถ้าเกิด Error (เช่น อีเมลซ้ำ, พิมพ์ผิดรูปแบบ)
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                failure.message,
+                style: textLabel.copyWith(fontSize: 12, color: Colors.white),
+              ),
+              backgroundColor: Colors.redAccent,
             ),
-            backgroundColor: Colors.redAccent,
-          ),
-        );
-      }
+          );
+        },
+        (user) {
+          // สำเร็จ! พาไปหน้าสแกนไวรัส และลบประวัติการย้อนกลับ
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => const ScanOptionScreen()),
+            (route) => false,
+          );
+        },
+      );
     }
   }
 
@@ -141,11 +146,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: vtBackground,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.white),
-      ),
+      appBar: const CustomAppBar(title: ''),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 24.0),
         child: Column(
@@ -209,33 +210,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
             const SizedBox(height: 40),
 
             // --- ปุ่ม SIGN UP ---
-            SizedBox(
-              width: double.infinity,
-              height: 55,
-              child: ElevatedButton(
-                // 3. ป้องกันการกดย้ำ ถ้าโหลดอยู่ให้เป็น null
-                onPressed: _isLoading ? null : _handleSignUp,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _isLoading ? vtCard : vtAccent,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                ),
-                // 4. สลับหน้าตาระหว่างตัวหมุน Loading กับ ข้อความ
-                child: _isLoading
-                    ? const SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(
-                          color: Colors.white,
-                          strokeWidth: 2.5,
-                        ),
-                      )
-                    : Text(
-                        "REGISTER",
-                        style: textLabel.copyWith(letterSpacing: 1),
-                      ),
-              ),
+            VTPrimaryButton(
+              text: "REGISTER",
+              isLoading: _isLoading,
+              onPressed: _handleSignUp,
             ),
 
             const SizedBox(height: 20),

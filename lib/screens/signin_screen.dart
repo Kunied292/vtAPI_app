@@ -6,6 +6,7 @@ import 'scan_option_screen.dart';
 
 import '../services/auth_service.dart';
 import '../const/my_const.dart';
+import '../widgets/vt_primary_button_widget.dart';
 
 class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key});
@@ -49,30 +50,33 @@ class _SignInScreenState extends State<SignInScreen> {
 
     // เรียกใช้ Firebase
     final authService = AuthService();
-    final errorMessage = await authService.signInWithEmail(email, password);
+    final resultOrFailure = await authService.signInWithEmail(email, password);
 
     if (mounted) {
       setState(() => _isLoading = false); // ปิดตัวหมุน
 
-      if (errorMessage == null) {
-        // ล็อกอินสำเร็จ ล้างประวัติหน้า Login แล้วไปหน้า Scanner
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (context) => const ScanOptionScreen()),
-          (route) => false,
-        );
-      } else {
-        // แจ้งเตือน Error จาก Firebase (เช่น รหัสผิด, ไม่มีอีเมลนี้)
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              "Email or Password is incorrect",
-              style: textLabel.copyWith(fontSize: 12, color: Colors.white),
+      resultOrFailure.fold(
+        (failure) {
+          // แจ้งเตือน Error
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                failure.message,
+                style: textLabel.copyWith(fontSize: 12, color: Colors.white),
+              ),
+              backgroundColor: Colors.redAccent,
             ),
-            backgroundColor: Colors.redAccent,
-          ),
-        );
-      }
+          );
+        },
+        (user) {
+          // ล็อกอินสำเร็จ ล้างประวัติหน้า Login แล้วไปหน้า Scanner
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => const ScanOptionScreen()),
+            (route) => false,
+          );
+        },
+      );
     }
   }
 
@@ -140,33 +144,10 @@ class _SignInScreenState extends State<SignInScreen> {
                 const SizedBox(height: 20),
 
                 // --- ปุ่ม SIGN IN ---
-                SizedBox(
-                  width: double.infinity,
-                  height: 55,
-                  child: ElevatedButton(
-                    onPressed: _isLoading
-                        ? null
-                        : _handleSignIn, // 4. ล็อคปุ่มตอนโหลด
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _isLoading ? vtCard : vtAccent,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                    ),
-                    child: _isLoading
-                        ? const SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2.5,
-                            ),
-                          )
-                        : Text(
-                            "SIGN IN",
-                            style: textLabel.copyWith(letterSpacing: 1),
-                          ),
-                  ),
+                VTPrimaryButton(
+                  text: "SIGN IN",
+                  isLoading: _isLoading,
+                  onPressed: _handleSignIn,
                 ),
                 const SizedBox(height: 40),
 

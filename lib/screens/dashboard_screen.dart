@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../services/firestore_service.dart';
 import '../const/my_const.dart';
 import '../widgets/scan_details_dialog.dart';
+import '../models/scan_history_model.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -15,12 +15,17 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   bool _isDescending =
       true; // true = ใหม่สุดไปเก่าสุด, false = เก่าสุดไปใหม่สุด
-  List<QueryDocumentSnapshot>? _cachedDocs; // 🌟 เก็บข้อมูลชั่วคราวกันจอกระพริบ
+  List<ScanHistoryModel>? _cachedDocs; // 🌟 เก็บข้อมูลชั่วคราวกันจอกระพริบ
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(24.0),
+      padding: const EdgeInsets.only(
+        top: 24.0,
+        bottom: 0,
+        left: 24.0,
+        right: 24.0,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -36,14 +41,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
           // 💡 ใช้ StreamBuilder ดึงข้อมูลจาก Firestore แบบ Real-time
           Expanded(
-            child: StreamBuilder<QuerySnapshot>(
+            child: StreamBuilder<List<ScanHistoryModel>>(
               stream: FirestoreService().getUserHistoryStream(
                 descending: _isDescending,
               ),
               builder: (context, snapshot) {
                 // อัปเดต Cache ทุกครั้งที่มีข้อมูลใหม่เข้ามา
                 if (snapshot.hasData) {
-                  _cachedDocs = snapshot.data!.docs;
+                  _cachedDocs = snapshot.data;
                 }
 
                 // ใช้ข้อมูลจาก Cache แทนถ้ามี (เพื่อกันจอกระพริบตอนสลับ Sort)
@@ -75,8 +80,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 int threatCount = 0;
 
                 for (var doc in docs) {
-                  final data = doc.data() as Map<String, dynamic>;
-                  if (data['isSafe'] == true) {
+                  if (doc.isSafe) {
                     cleanCount++;
                   } else {
                     threatCount++;
@@ -166,8 +170,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       child: ListView.builder(
                         itemCount: docs.length,
                         itemBuilder: (context, index) {
-                          final data =
-                              docs[index].data() as Map<String, dynamic>;
+                          final data = docs[index];
 
                           return _buildHistoryItem(context, data);
                         },
@@ -216,9 +219,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildHistoryItem(BuildContext context, Map<String, dynamic> data) {
-    final name = data['targetName'] ?? 'Unknown';
-    final isSafe = data['isSafe'] ?? false;
+  Widget _buildHistoryItem(BuildContext context, ScanHistoryModel data) {
+    final name = data.targetName;
+    final isSafe = data.isSafe;
     final status = isSafe ? 'CLEAN' : 'MALICIOUS';
     final color = isSafe ? vtGreen : vtRed;
 
@@ -265,6 +268,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ],
               ),
             ),
+            const Icon(Icons.chevron_right, color: Colors.grey, size: 20),
           ],
         ),
       ),
