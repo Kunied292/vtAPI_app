@@ -5,6 +5,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'signin_screen.dart';
 import '../const/my_const.dart';
 import '../widgets/vt_primary_button_widget.dart';
+import '../services/vt_api.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -21,114 +22,85 @@ class ProfileScreen extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // --- ส่วน Header ---
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(3),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: isGuest ? Colors.grey : vtAccent,
-                    width: 2,
-                  ),
-                ),
-                child: CircleAvatar(
-                  radius: 35,
-                  backgroundColor: vtCard,
-                  child: Icon(
-                    isGuest ? Icons.person_outline : Icons.person,
-                    size: 40,
-                    color: Colors.grey,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 20),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // 2. ใช้ FutureBuilder เพื่อดึงชื่อจาก Firestore
-                    isGuest
-                        ? Text(
-                            "GUEST USER",
-                            style: textLabel.copyWith(
-                              fontSize: 20,
-                              letterSpacing: 1.5,
-                              color: vtTextPrimary,
-                            ),
-                          )
-                        : FutureBuilder<DocumentSnapshot>(
-                            // วิ่งไปหาไฟล์ (Document) ที่ชื่อตรงกับ UID ของ User
-                            future: FirebaseFirestore.instance
-                                .collection('users')
-                                .doc(user.uid)
-                                .get(),
-                            builder: (context, snapshot) {
-                              // ระหว่างรอข้อมูล (หมุนโหลดเล็กๆ หรือขึ้นข้อความรอ)
-                              if (snapshot.connectionState ==
-                                  ConnectionState.waiting) {
-                                return Text(
-                                  "LOADING...",
-                                  style: textLabel.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    letterSpacing: 1.5,
-                                    color: vtTextSecondary,
-                                    fontSize: 20,
-                                  ),
-                                );
-                              }
+          isGuest
+              ? _buildGuestHeader()
+              : StreamBuilder<DocumentSnapshot>(
+                  stream: FirebaseFirestore.instance
+                      .collection('users')
+                      .doc(user.uid)
+                      .snapshots(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
 
-                              // ถ้าดึงข้อมูลสำเร็จและมีไฟล์อยู่จริง
-                              if (snapshot.hasData && snapshot.data!.exists) {
-                                // แกะข้อมูลออกมาเป็น Map
-                                final data =
-                                    snapshot.data!.data()
-                                        as Map<String, dynamic>;
-                                // ดึงฟิลด์ 'name' ออกมา ถ้าไม่มีให้ใช้คำว่า 'PRO USER' แทน
-                                final String userName =
-                                    data['name'] ?? 'PRO USER';
+                    String userName = 'PRO USER';
+                    String? photoUrl;
 
-                                return Text(
-                                  userName, // แปลงเป็นตัวพิมพ์ใหญ่ให้เข้ากับธีม
-                                  style: textLabel.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    letterSpacing: 1.5,
-                                    fontSize: 20,
-                                    color: vtTextPrimary,
-                                  ),
-                                  overflow: TextOverflow
-                                      .ellipsis, // ถ้าชื่อยาวไปให้ใส่ ...
-                                );
-                              }
+                    if (snapshot.hasData && snapshot.data!.exists) {
+                      final data =
+                          snapshot.data!.data() as Map<String, dynamic>;
+                      userName = data['name'] ?? 'PRO USER';
+                      photoUrl = data['photoUrl'];
+                    }
 
-                              // ถ้าเกิด Error หรือหาข้อมูลไม่เจอ
-                              return Text(
-                                "PRO USER",
+                    return Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(3),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(color: vtAccent, width: 2),
+                          ),
+                          child: CircleAvatar(
+                            radius: 35,
+                            backgroundColor: vtCard,
+                            // เช็คถ้ามี photoUrl ให้แสดงรูป ไม่ก็โชว์ไอคอนคน
+                            backgroundImage: photoUrl != null
+                                ? (photoUrl.startsWith('assets/')
+                                      ? AssetImage(photoUrl)
+                                      : NetworkImage(photoUrl) as ImageProvider)
+                                : null,
+                            child: photoUrl == null
+                                ? const Icon(
+                                    Icons.person,
+                                    size: 40,
+                                    color: Colors.grey,
+                                  )
+                                : null,
+                          ),
+                        ),
+                        const SizedBox(width: 20),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                userName,
                                 style: textLabel.copyWith(
                                   fontWeight: FontWeight.bold,
                                   letterSpacing: 1.5,
                                   fontSize: 20,
                                   color: vtTextPrimary,
                                 ),
-                              );
-                            },
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 5),
+                              Text(
+                                user.email ?? "No Email",
+                                style: textDescription.copyWith(
+                                  color: vtAccent,
+                                  fontSize: 12,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
                           ),
-                    const SizedBox(height: 5),
-                    Text(
-                      isGuest
-                          ? "Sign in to sync your history"
-                          : (user.email ?? "No Email"),
-                      style: textDescription.copyWith(
-                        color: isGuest ? Colors.grey : vtAccent,
-                        fontSize: 12,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
+                        ),
+                      ],
+                    );
+                  },
                 ),
-              ),
-            ],
-          ),
 
           const SizedBox(height: 40),
           Text("PREFERENCES", style: textDescription),
@@ -138,12 +110,22 @@ class ProfileScreen extends StatelessWidget {
             FontAwesomeIcons.imagePortrait,
             "CHANGE PROFILE PICTURE",
             isEnabled: !isGuest,
+            onTap: () {
+              if (user != null) {
+                _showProfilePicturePicker(context, user);
+              }
+            },
           ),
           const SizedBox(height: 12),
           _buildMenuRow(
             FontAwesomeIcons.key,
             "API KEYS CONFIGURATION",
             isEnabled: !isGuest,
+            onTap: () {
+              if (user != null) {
+                _showApiUsageDialog(context);
+              }
+            },
           ),
           const SizedBox(height: 12),
           _buildMenuRow(
@@ -194,7 +176,7 @@ class ProfileScreen extends StatelessWidget {
                       ),
                     ),
                     style: OutlinedButton.styleFrom(
-                      side: BorderSide(color: vtRed.withOpacity(0.5)),
+                      side: BorderSide(color: vtRed.withValues(alpha: 0.5)),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
                       ),
@@ -207,12 +189,17 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildMenuRow(IconData icon, String text, {bool isEnabled = true}) {
+  Widget _buildMenuRow(
+    IconData icon,
+    String text, {
+    bool isEnabled = true,
+    VoidCallback? onTap,
+  }) {
     return Material(
       color: vtCard,
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
-        onTap: isEnabled ? () {} : null,
+        onTap: isEnabled ? (onTap ?? () {}) : null,
         borderRadius: BorderRadius.circular(16),
         child: Padding(
           padding: const EdgeInsets.all(20),
@@ -244,6 +231,268 @@ class ProfileScreen extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildGuestHeader() {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(3),
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: Colors.grey, width: 2),
+          ),
+          child: const CircleAvatar(
+            radius: 35,
+            backgroundColor: vtCard,
+            child: Icon(Icons.person_outline, size: 40, color: Colors.grey),
+          ),
+        ),
+        const SizedBox(width: 20),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "GUEST USER",
+                style: textLabel.copyWith(
+                  fontSize: 20,
+                  letterSpacing: 1.5,
+                  color: vtTextPrimary,
+                ),
+              ),
+              const SizedBox(height: 5),
+              Text(
+                "Sign in to sync your history",
+                style: textDescription.copyWith(
+                  color: Colors.grey,
+                  fontSize: 12,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showProfilePicturePicker(BuildContext context, User user) {
+    final List<String> profileImages = [
+      'assets/profile_images/aldi-sigun-K-sdQ12jZeY-unsplash.jpg',
+      'assets/profile_images/alison-wang-mou0S7ViElQ-unsplash.jpg',
+      'assets/profile_images/anshita-nair-0rxLLHD1XxA-unsplash.jpg',
+      'assets/profile_images/luthfi-alfarizi-xRMK0ea-Of4-unsplash.jpg',
+      'assets/profile_images/shubham-dhage-t0Bv0OBQuTg-unsplash.jpg',
+    ];
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: vtBackground,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 20),
+              Container(
+                width: 40,
+                height: 5,
+                decoration: BoxDecoration(
+                  color: Colors.grey.withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                "Select Profile Picture",
+                style: textTitle.copyWith(fontSize: 18),
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                height: 120,
+                child: ListView.separated(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  scrollDirection: Axis.horizontal,
+                  itemCount: profileImages.length,
+                  separatorBuilder: (context, index) =>
+                      const SizedBox(width: 15),
+                  itemBuilder: (context, index) {
+                    final imagePath = profileImages[index];
+                    return GestureDetector(
+                      onTap: () async {
+                        Navigator.pop(context); // ปิด popup
+
+                        // อัปเดตข้อมูลบน Firestore
+                        await FirebaseFirestore.instance
+                            .collection('users')
+                            .doc(user.uid)
+                            .update({'photoUrl': imagePath});
+
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                "Profile picture updated successfully!",
+                                style: textLabel.copyWith(
+                                  fontSize: 12,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              backgroundColor: Colors.green,
+                            ),
+                          );
+                        }
+                      },
+                      child: CircleAvatar(
+                        radius: 50,
+                        backgroundImage: AssetImage(imagePath),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 30),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showApiUsageDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          backgroundColor: vtCard,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(
+                      FontAwesomeIcons.chartLine,
+                      color: vtAccent,
+                      size: 24,
+                    ),
+                    const SizedBox(width: 15),
+                    Text(
+                      "VIRUSTOTAL API USAGE",
+                      style: textTitle.copyWith(fontSize: 16),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                FutureBuilder(
+                  future: VtApiService().getApiUsage(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(20.0),
+                          child: CircularProgressIndicator(),
+                        ),
+                      );
+                    }
+
+                    if (snapshot.hasError || !snapshot.hasData) {
+                      return Text(
+                        "Failed to load API usage data.",
+                        style: textDescription.copyWith(color: vtRed),
+                      );
+                    }
+
+                    final result = snapshot.data!;
+                    return result.fold(
+                      (failure) => Text(
+                        failure.message,
+                        style: textDescription.copyWith(color: vtRed),
+                      ),
+                      (data) {
+                        final dailyData = data['data']?['daily'];
+                        int totalUsedToday = 0;
+
+                        if (dailyData != null) {
+                          // Get today's date in YYYY-MM-DD format (UTC)
+                          final now = DateTime.now().toUtc();
+                          final todayStr =
+                              "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
+
+                          final todayUsage = dailyData[todayStr];
+                          if (todayUsage != null) {
+                            // Sum up specific usage endpoints
+                            final fileUploads =
+                                todayUsage['/api/v3/(file_upload)'] ?? 0;
+                            final urlSubmissions =
+                                todayUsage['/api/v3/(url_submission)'] ?? 0;
+                            totalUsedToday = fileUploads + urlSubmissions;
+                          }
+                        }
+
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildUsageRow("Today's Requests", totalUsedToday),
+                          ],
+                        );
+                      },
+                    );
+                  },
+                ),
+                const SizedBox(height: 30),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: Text(
+                      "CLOSE",
+                      style: textLabel.copyWith(
+                        color: vtAccent,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildUsageRow(String title, int usedCount) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              title,
+              style: textDescription.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            Text(
+              "$usedCount Requests",
+              style: textLabel.copyWith(fontSize: 14, color: vtAccent),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }

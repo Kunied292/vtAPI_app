@@ -209,9 +209,11 @@ class _AnalyzingScreenState extends State<AnalyzingScreen>
               style: textLabel.copyWith(fontSize: 20, letterSpacing: 2),
             ),
             const SizedBox(height: 10),
-            Text(
-              widget.targetName,
-              style: textLabel.copyWith(fontSize: 14, color: vtAccent),
+            Center(
+              child: Text(
+                widget.targetName,
+                style: textLabel.copyWith(fontSize: 14, color: vtAccent),
+              ),
             ),
             const SizedBox(height: 30),
             Text(

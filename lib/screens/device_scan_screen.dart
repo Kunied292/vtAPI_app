@@ -1,4 +1,3 @@
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; // <--- เพิ่มสำหรับ MethodChannel
 import 'package:installed_apps/installed_apps.dart';
@@ -182,8 +181,8 @@ class _DeviceScanScreenState extends State<DeviceScanScreen> {
                                         ? null
                                         : () => _scanApp(app),
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: vtAccent.withOpacity(
-                                        0.2,
+                                      backgroundColor: vtAccent.withValues(
+                                        alpha: 0.2,
                                       ),
                                       elevation: 0,
                                       shape: RoundedRectangleBorder(

@@ -145,7 +145,7 @@ class _ThreatIntelScreenState extends State<ThreatIntelScreen> {
                               borderRadius: BorderRadius.circular(16),
                               border: Border.all(
                                 color: isCritical
-                                    ? vtRed.withOpacity(0.5)
+                                    ? vtRed.withValues(alpha: 0.5)
                                     : Colors.transparent,
                                 width: 1,
                               ),
@@ -199,8 +199,12 @@ class _ThreatIntelScreenState extends State<ThreatIntelScreen> {
                                                   ),
                                               decoration: BoxDecoration(
                                                 color: isCritical
-                                                    ? vtRed.withOpacity(0.2)
-                                                    : vtAccent.withOpacity(0.2),
+                                                    ? vtRed.withValues(
+                                                        alpha: 0.2,
+                                                      )
+                                                    : vtAccent.withValues(
+                                                        alpha: 0.2,
+                                                      ),
                                                 borderRadius:
                                                     BorderRadius.circular(4),
                                               ),

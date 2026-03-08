@@ -131,4 +131,29 @@ class VtApiService {
       return Left(Failure('Network Error: $e'));
     }
   }
+
+  Future<Either<Failure, Map<String, dynamic>>> getApiUsage() async {
+    final uri = Uri.parse(
+      'https://www.virustotal.com/api/v3/users/$_apiKey/api_usage',
+    );
+
+    try {
+      final response = await http.get(
+        uri,
+        headers: {'x-apikey': _apiKey, 'accept': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        return Right(jsonDecode(response.body));
+      } else {
+        return Left(
+          Failure(
+            'VT API Usage Error: ${response.statusCode} - ${response.body}',
+          ),
+        );
+      }
+    } catch (e) {
+      return Left(Failure('Network Error: $e'));
+    }
+  }
 }

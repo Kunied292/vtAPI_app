@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:dartz/dartz.dart';
 import '../core/failure.dart';
 
@@ -62,10 +63,12 @@ class AuthService {
         return Left(Failure("Login failed unexpectedly."));
       }
     } on FirebaseAuthException catch (e) {
-      if (e.code == 'user-not-found')
+      if (e.code == 'user-not-found') {
         return Left(Failure('No user found for that email.'));
-      if (e.code == 'wrong-password')
+      }
+      if (e.code == 'wrong-password') {
         return Left(Failure('Wrong password provided.'));
+      }
       return Left(Failure(e.message ?? "An error occurred during sign in."));
     } catch (e) {
       return Left(Failure(e.toString()));
@@ -79,6 +82,59 @@ class AuthService {
       return const Right(null);
     } catch (e) {
       return Left(Failure("Failed to sign out: ${e.toString()}"));
+    }
+  }
+
+  bool _isGoogleSignInInitialized = false;
+
+  Future<String?> signInWithGoogle() async {
+    try {
+      if (!_isGoogleSignInInitialized) {
+        await GoogleSignIn.instance.initialize();
+        _isGoogleSignInInitialized = true;
+      }
+
+      // 1. เรียกหน้าต่างเด้งขึ้นมาให้เลือกบัญชี Google
+      GoogleSignInAccount? googleUser;
+      try {
+        googleUser = await GoogleSignIn.instance.authenticate();
+      } on GoogleSignInException catch (e) {
+        // ถ้าผู้ใช้กดยกเลิกกลางคัน ให้จบการทำงาน
+        if (e.code == GoogleSignInExceptionCode.canceled) {
+          return 'cancelled';
+        }
+        rethrow; // โยน error อื่นๆ ต่อไป
+      }
+
+      // 2. ขอ Token ยืนยันตัวตนจาก Google
+      final GoogleSignInAuthentication googleAuth = googleUser.authentication;
+      final OAuthCredential credential = GoogleAuthProvider.credential(
+        idToken: googleAuth.idToken,
+        // accessToken is no longer provided during basic authentication in google_sign_in v7+
+      );
+
+      // 3. เอา Token ไปล็อกอินเข้า Firebase
+      UserCredential userCredential = await _auth.signInWithCredential(
+        credential,
+      );
+
+      // 4. (พิเศษ) ถ้าเพิ่งเคยล็อกอินครั้งแรก ให้สร้างประวัติลง Firestore ด้วย!
+      if (userCredential.additionalUserInfo?.isNewUser == true) {
+        await _db.collection('users').doc(userCredential.user!.uid).set({
+          'name': userCredential.user!.displayName ?? 'GOOGLE USER',
+          'email': userCredential.user!.email,
+          'photoUrl':
+              userCredential.user!.photoURL, // ดึงรูปโปรไฟล์กูเกิลมาให้เลย
+          'createdAt': FieldValue.serverTimestamp(),
+          'role': 'user',
+        });
+      }
+
+      return null; // สำเร็จ
+    } on FirebaseAuthException catch (e) {
+      return e.message;
+    } catch (e) {
+      return e.toString();
     }
   }
 

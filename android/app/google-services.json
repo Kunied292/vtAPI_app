@@ -12,7 +12,20 @@
           "package_name": "com.example.vtscanner"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "682114140757-2ejs314sunuo060k6s7saecjj1ddq81c.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.vtscanner",
+            "certificate_hash": "7732fef6de21c8c8976f2cfc846b0cf025a921fd"
+          }
+        },
+        {
+          "client_id": "682114140757-o0p9em1lf9mt0pnp86qdiibtf18ha39h.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyAt94jX6V1P3LjqUa8RtgXF0FFhQ2nZoS0"
@@ -20,7 +33,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "682114140757-o0p9em1lf9mt0pnp86qdiibtf18ha39h.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "682114140757-t95grjnemvtv7k3m500fukg07n552hlm.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.vtscanner"
+              }
+            }
+          ]
         }
       }
     }

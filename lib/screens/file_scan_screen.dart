@@ -96,8 +96,8 @@ class _FileScanScreenState extends State<FileScanScreen> {
                     border: Border.all(
                       color: _isLoading
                           ? vtAccent
-                          : vtAccent.withOpacity(
-                              0.5,
+                          : vtAccent.withValues(
+                              alpha: 0.5,
                             ), // ถ้าโหลดอยู่ขอบจะสว่างขึ้น
                       width: 2,
                     ),
@@ -130,7 +130,7 @@ class _FileScanScreenState extends State<FileScanScreen> {
                             Icon(
                               Icons.cloud_upload_outlined,
                               size: 80,
-                              color: vtAccent.withOpacity(0.8),
+                              color: vtAccent.withValues(alpha: 0.8),
                             ),
                             const SizedBox(height: 20),
                             Text(

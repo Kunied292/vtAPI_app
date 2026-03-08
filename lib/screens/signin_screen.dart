@@ -20,6 +20,9 @@ class _SignInScreenState extends State<SignInScreen> {
   final TextEditingController _passwordController = TextEditingController();
   bool _obscurePassword = true;
   bool _isLoading = false;
+  bool _isGoogleLoading = false;
+
+  bool get _isAnyLoading => _isLoading || _isGoogleLoading;
 
   @override
   void dispose() {
@@ -29,6 +32,7 @@ class _SignInScreenState extends State<SignInScreen> {
   }
 
   Future<void> _handleSignIn() async {
+    if (_isAnyLoading) return;
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
 
@@ -77,6 +81,35 @@ class _SignInScreenState extends State<SignInScreen> {
           );
         },
       );
+    }
+  }
+
+  Future<void> _handleGoogleSignIn() async {
+    if (_isAnyLoading) return;
+    setState(() => _isGoogleLoading = true);
+
+    final authService = AuthService();
+    final errorMessage = await authService.signInWithGoogle();
+
+    if (mounted) {
+      setState(() => _isGoogleLoading = false);
+
+      if (errorMessage == null) {
+        // สำเร็จ พาเข้าแอปเลย
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const ScanOptionScreen()),
+          (route) => false,
+        );
+      } else if (errorMessage != 'cancelled') {
+        // โชว์ Error (ยกเว้นกรณีที่ผู้ใช้กดยกเลิกเอง)
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(errorMessage),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
     }
   }
 
@@ -172,11 +205,24 @@ class _SignInScreenState extends State<SignInScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    _buildSocialButton(FontAwesomeIcons.google, " Google"),
+                    _buildSocialButton(
+                      FontAwesomeIcons.google,
+                      " Google",
+                      onTap: _handleGoogleSignIn,
+                      isLoading: _isGoogleLoading,
+                    ),
                     const SizedBox(width: 10),
-                    _buildSocialButton(FontAwesomeIcons.facebook, " Facebook"),
+                    _buildSocialButton(
+                      FontAwesomeIcons.facebook,
+                      " Facebook",
+                      onTap: _handleGoogleSignIn,
+                    ),
                     const SizedBox(width: 10),
-                    _buildSocialButton(FontAwesomeIcons.github, " GitHub"),
+                    _buildSocialButton(
+                      FontAwesomeIcons.github,
+                      " GitHub",
+                      onTap: _handleGoogleSignIn,
+                    ),
                   ],
                 ),
 
@@ -255,22 +301,38 @@ class _SignInScreenState extends State<SignInScreen> {
   }
 
   // Widget สร้างปุ่ม Social
-  Widget _buildSocialButton(IconData icon, String label) {
+  Widget _buildSocialButton(
+    IconData icon,
+    String label, {
+    VoidCallback? onTap,
+    bool isLoading = false,
+  }) {
     return InkWell(
-      onTap: () {
-        // กดแล้วทำอะไร...
-      },
+      onTap: _isAnyLoading ? null : onTap,
       borderRadius: BorderRadius.circular(12),
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: vtCard,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey.withOpacity(0.2)),
+          border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
         ),
         child: Row(
           children: [
-            Icon(icon, color: Colors.white, size: 30),
+            if (isLoading)
+              const SizedBox(
+                width: 30,
+                height: 30,
+                child: Padding(
+                  padding: EdgeInsets.all(6.0),
+                  child: CircularProgressIndicator(
+                    color: Colors.white,
+                    strokeWidth: 2.5,
+                  ),
+                ),
+              )
+            else
+              Icon(icon, color: Colors.white, size: 30),
             Text(label, style: textLabel.copyWith(fontSize: 12)),
           ],
         ),
