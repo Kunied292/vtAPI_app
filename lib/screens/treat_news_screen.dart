@@ -6,6 +6,7 @@ import '../core/failure.dart';
 import '../services/news_service.dart';
 import '../const/my_const.dart';
 import '../widgets/vt_primary_button_widget.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 class ThreatIntelScreen extends StatefulWidget {
   const ThreatIntelScreen({super.key});
@@ -115,6 +116,10 @@ class _ThreatIntelScreenState extends State<ThreatIntelScreen> {
                         itemBuilder: (context, index) {
                           final article = items[index];
 
+                          // คำนวณเวลา delay ให้การ์ดที่โหลดขึ้นมาตอนแรกค่อยๆ โผล่ไล่กัน
+                          // แต่การ์ดที่เพิ่งโผล่มาตอนเลื่อนหน้าจอไม่ต้องรอ delay นาน
+                          final delayMs = (index < 6 ? index * 100 : 0).ms;
+
                           // ดึงข้อมูลแต่ละส่วนออกมาจาก JSON
                           final String title = article['title'] ?? "No Title";
                           final String description =
@@ -139,159 +144,180 @@ class _ThreatIntelScreenState extends State<ThreatIntelScreen> {
                               title.toLowerCase().contains('breach');
 
                           return Container(
-                            margin: const EdgeInsets.only(bottom: 16),
-                            decoration: BoxDecoration(
-                              color: vtCard,
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(
-                                color: isCritical
-                                    ? vtRed.withValues(alpha: 0.5)
-                                    : Colors.transparent,
-                                width: 1,
-                              ),
-                            ),
-                            // คลิปขอบให้มนเพื่อไม่ให้รูปภาพทะลุกรอบออกมา
-                            clipBehavior: Clip.antiAlias,
-                            child: InkWell(
-                              onTap: () => _launchUrl(articleUrl),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  // --- ส่วนรูปภาพหน้าปก ---
-                                  if (imageUrl != null && imageUrl.isNotEmpty)
-                                    Image.network(
-                                      imageUrl,
-                                      height: 180,
-                                      width: double.infinity,
-                                      fit: BoxFit.cover,
-                                      // ถ้าโหลดรูปไม่ขึ้น (เช่น ลิงก์ตาย) ให้โชว์กล่องสีเทาแทน
-                                      errorBuilder:
-                                          (context, error, stackTrace) {
-                                            return Container(
-                                              height: 180,
-                                              width: double.infinity,
-                                              color: Colors.black26,
-                                              child: const Icon(
-                                                Icons.broken_image,
-                                                color: Colors.grey,
-                                                size: 50,
-                                              ),
-                                            );
-                                          },
-                                    ),
-
-                                  // --- ส่วนเนื้อหาข่าว ---
-                                  Padding(
-                                    padding: const EdgeInsets.all(20),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Container(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                    horizontal: 8,
-                                                    vertical: 4,
+                                margin: const EdgeInsets.only(bottom: 16),
+                                decoration: BoxDecoration(
+                                  color: vtCard,
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(
+                                    color: isCritical
+                                        ? vtRed.withValues(alpha: 0.5)
+                                        : Colors.transparent,
+                                    width: 1,
+                                  ),
+                                ),
+                                // คลิปขอบให้มนเพื่อไม่ให้รูปภาพทะลุกรอบออกมา
+                                clipBehavior: Clip.antiAlias,
+                                child: InkWell(
+                                  onTap: () => _launchUrl(articleUrl),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      // --- ส่วนรูปภาพหน้าปก ---
+                                      if (imageUrl != null &&
+                                          imageUrl.isNotEmpty)
+                                        Image.network(
+                                          imageUrl,
+                                          height: 180,
+                                          width: double.infinity,
+                                          fit: BoxFit.cover,
+                                          // ถ้าโหลดรูปไม่ขึ้น (เช่น ลิงก์ตาย) ให้โชว์กล่องสีเทาแทน
+                                          errorBuilder:
+                                              (context, error, stackTrace) {
+                                                return Container(
+                                                  height: 180,
+                                                  width: double.infinity,
+                                                  color: Colors.black26,
+                                                  child: const Icon(
+                                                    Icons.broken_image,
+                                                    color: Colors.grey,
+                                                    size: 50,
                                                   ),
-                                              decoration: BoxDecoration(
-                                                color: isCritical
-                                                    ? vtRed.withValues(
-                                                        alpha: 0.2,
-                                                      )
-                                                    : vtAccent.withValues(
-                                                        alpha: 0.2,
+                                                );
+                                              },
+                                        ),
+
+                                      // --- ส่วนเนื้อหาข่าว ---
+                                      Padding(
+                                        padding: const EdgeInsets.all(20),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              children: [
+                                                Container(
+                                                  padding:
+                                                      const EdgeInsets.symmetric(
+                                                        horizontal: 8,
+                                                        vertical: 4,
                                                       ),
-                                                borderRadius:
-                                                    BorderRadius.circular(4),
-                                              ),
-                                              child: Text(
-                                                isCritical
-                                                    ? "CRITICAL"
-                                                    : "NEWS",
-                                                style: textLabel.copyWith(
-                                                  color: isCritical
-                                                      ? vtRed
-                                                      : vtAccent,
-                                                  fontSize: 10,
-                                                  fontWeight: FontWeight.bold,
+                                                  decoration: BoxDecoration(
+                                                    color: isCritical
+                                                        ? vtRed.withValues(
+                                                            alpha: 0.2,
+                                                          )
+                                                        : vtAccent.withValues(
+                                                            alpha: 0.2,
+                                                          ),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          4,
+                                                        ),
+                                                  ),
+                                                  child: Text(
+                                                    isCritical
+                                                        ? "CRITICAL"
+                                                        : "NEWS",
+                                                    style: textLabel.copyWith(
+                                                      color: isCritical
+                                                          ? vtRed
+                                                          : vtAccent,
+                                                      fontSize: 10,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                    ),
+                                                  ),
                                                 ),
+                                                Row(
+                                                  children: [
+                                                    const Icon(
+                                                      Icons.access_time,
+                                                      color: Colors.grey,
+                                                      size: 12,
+                                                    ),
+                                                    const SizedBox(width: 4),
+                                                    Text(
+                                                      pubDate,
+                                                      style: textDescription
+                                                          .copyWith(
+                                                            fontSize: 10,
+                                                          ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ],
+                                            ),
+                                            const SizedBox(height: 12),
+                                            Text(
+                                              title,
+                                              style: textLabel.copyWith(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.bold,
                                               ),
                                             ),
+                                            const SizedBox(height: 8),
+                                            Text(
+                                              description,
+                                              style: textDescription.copyWith(
+                                                fontSize: 12,
+                                                height: 1.5,
+                                              ),
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                            const SizedBox(height: 12),
+                                            const Divider(
+                                              color: Colors.black26,
+                                            ),
+                                            const SizedBox(height: 8),
                                             Row(
                                               children: [
                                                 const Icon(
-                                                  Icons.access_time,
+                                                  Icons.language,
                                                   color: Colors.grey,
-                                                  size: 12,
+                                                  size: 14,
                                                 ),
-                                                const SizedBox(width: 4),
-                                                Text(
-                                                  pubDate,
-                                                  style: textDescription
-                                                      .copyWith(fontSize: 10),
+                                                const SizedBox(width: 6),
+                                                // โชว์ชื่อแหล่งข่าวจริงๆ ที่ดึงมาได้
+                                                Expanded(
+                                                  child: Text(
+                                                    "Source: $sourceName",
+                                                    style: textDescription
+                                                        .copyWith(
+                                                          fontSize: 10,
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                        ),
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                  ),
+                                                ),
+                                                const Icon(
+                                                  Icons.arrow_forward,
+                                                  color: Colors.grey,
+                                                  size: 14,
                                                 ),
                                               ],
                                             ),
                                           ],
                                         ),
-                                        const SizedBox(height: 12),
-                                        Text(
-                                          title,
-                                          style: textLabel.copyWith(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 8),
-                                        Text(
-                                          description,
-                                          style: textDescription.copyWith(
-                                            fontSize: 12,
-                                            height: 1.5,
-                                          ),
-                                          maxLines: 2,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                        const SizedBox(height: 12),
-                                        const Divider(color: Colors.black26),
-                                        const SizedBox(height: 8),
-                                        Row(
-                                          children: [
-                                            const Icon(
-                                              Icons.language,
-                                              color: Colors.grey,
-                                              size: 14,
-                                            ),
-                                            const SizedBox(width: 6),
-                                            // โชว์ชื่อแหล่งข่าวจริงๆ ที่ดึงมาได้
-                                            Expanded(
-                                              child: Text(
-                                                "Source: $sourceName",
-                                                style: textDescription.copyWith(
-                                                  fontSize: 10,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                            ),
-                                            const Icon(
-                                              Icons.arrow_forward,
-                                              color: Colors.grey,
-                                              size: 14,
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
+                                      ),
+                                    ],
                                   ),
-                                ],
-                              ),
-                            ),
-                          );
+                                ),
+                              )
+                              .animate()
+                              .fade(duration: 400.ms, delay: delayMs)
+                              .slideY(
+                                begin: 0.1,
+                                duration: 400.ms,
+                                curve: Curves.easeOut,
+                                delay: delayMs,
+                              );
                         },
                       ),
                     );

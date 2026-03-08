@@ -11,6 +11,7 @@ import 'device_scan_screen.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../const/my_const.dart';
 import '../widgets/custom_app_bar_widget.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 class ScanOptionScreen extends StatefulWidget {
   const ScanOptionScreen({super.key});
@@ -65,8 +66,11 @@ class _ScanOptionScreenState extends State<ScanOptionScreen> {
             : null,
       ),
 
-      // สลับ Widget ของ body ตาม Index ที่ถูกคลิก
-      body: _pages[_selectedIndex],
+      // สลับ Widget ของ body ตาม Index ที่ถูกคลิก พร้อมทำ Animation
+      body: _pages[_selectedIndex]
+          .animate(key: ValueKey(_selectedIndex))
+          .fade(duration: 300.ms)
+          .slideY(begin: 0.05, duration: 300.ms, curve: Curves.easeOut),
 
       bottomNavigationBar: SizedBox(
         height: 100, // ยืดความสูงขึ้นเล็กน้อย

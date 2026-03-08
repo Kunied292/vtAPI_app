@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:ui';
 import '../const/my_const.dart';
 import '../models/scan_history_model.dart';
 
@@ -25,151 +26,156 @@ void showScanDetailsDialog(BuildContext context, ScanHistoryModel data) {
 
   showDialog(
     context: context,
+    // Add barrier color to transparent so backdrop filter shines through
+    barrierColor: Colors.black.withValues(alpha: 0.5),
     builder: (context) {
-      return Dialog(
-        backgroundColor: vtBackground,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: vtCard, width: 2),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // --- ส่วนหัว (Header) ---
-              Row(
-                children: [
-                  Icon(statusIcon, color: statusColor, size: 28),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      "SCAN REPORT",
-                      style: textLabel.copyWith(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1,
+      return BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+        child: Dialog(
+          backgroundColor: vtBackground,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: const BorderSide(color: vtCard, width: 2),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // --- ส่วนหัว (Header) ---
+                Row(
+                  children: [
+                    Icon(statusIcon, color: statusColor, size: 28),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        "SCAN REPORT",
+                        style: textLabel.copyWith(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1,
+                        ),
                       ),
                     ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close, color: Colors.grey),
-                    onPressed: () => Navigator.pop(context),
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 15),
-              const Divider(color: Colors.grey),
-              const SizedBox(height: 15),
+                    IconButton(
+                      icon: const Icon(Icons.close, color: Colors.grey),
+                      onPressed: () => Navigator.pop(context),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 15),
+                const Divider(color: Colors.grey),
+                const SizedBox(height: 15),
 
-              // --- ข้อมูลเป้าหมาย (Target Info) ---
-              Text(
-                "TARGET ($scanType)",
-                style: textDescription.copyWith(fontSize: 10),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                targetName,
-                style: textLabel.copyWith(fontSize: 14),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 15),
-
-              // --- สถานะ & เวลา (Status & Time) ---
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "STATUS",
-                        style: textDescription.copyWith(fontSize: 10),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        statusText,
-                        style: textLabel.copyWith(
-                          fontSize: 12,
-                          color: statusColor,
-                        ),
-                      ),
-                    ],
-                  ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(
-                        "SCANNED AT",
-                        style: textDescription.copyWith(fontSize: 10),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        formattedDate,
-                        style: textLabel.copyWith(
-                          fontSize: 12,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 15),
-              const Divider(color: Colors.grey),
-              const SizedBox(height: 15),
-
-              // --- รายละเอียด Vendor (Vendor Details) ---
-              Text(
-                "DETECTION SCORE",
-                style: textDescription.copyWith(fontSize: 10),
-              ),
-              const SizedBox(height: 4),
-
-              if (hasDetailedData) ...[
+                // --- ข้อมูลเป้าหมาย (Target Info) ---
                 Text(
-                  "$maliciousCount / $totalEngines engines detected this file",
-                  style: textLabel.copyWith(fontSize: 12),
+                  "TARGET ($scanType)",
+                  style: textDescription.copyWith(fontSize: 10),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  targetName,
+                  style: textLabel.copyWith(fontSize: 14),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 15),
 
-                // กล่องเลื่อนดู Vendor (จำกัดความสูงไว้จะได้ไม่ล้นจอ)
-                Container(
-                  height: 200,
-                  decoration: BoxDecoration(
-                    color: vtCard,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: _buildVendorList(vendorResults),
-                ),
-              ] else ...[
-                // ถ้าไม่มีข้อมูลละเอียด (สแกนเก่าๆ)
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: vtCard,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    "Detailed vendor reports are not available for legacy scans.",
-                    style: textDescription.copyWith(
-                      fontSize: 12,
-                      fontStyle: FontStyle.italic,
+                // --- สถานะ & เวลา (Status & Time) ---
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "STATUS",
+                          style: textDescription.copyWith(fontSize: 10),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          statusText,
+                          style: textLabel.copyWith(
+                            fontSize: 12,
+                            color: statusColor,
+                          ),
+                        ),
+                      ],
                     ),
-                    textAlign: TextAlign.center,
-                  ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          "SCANNED AT",
+                          style: textDescription.copyWith(fontSize: 10),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          formattedDate,
+                          style: textLabel.copyWith(
+                            fontSize: 12,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
-              ],
-            ],
-          ),
-        ),
-      );
+
+                const SizedBox(height: 15),
+                const Divider(color: Colors.grey),
+                const SizedBox(height: 15),
+
+                // --- รายละเอียด Vendor (Vendor Details) ---
+                Text(
+                  "DETECTION SCORE",
+                  style: textDescription.copyWith(fontSize: 10),
+                ),
+                const SizedBox(height: 4),
+
+                if (hasDetailedData) ...[
+                  Text(
+                    "$maliciousCount / $totalEngines engines detected this file",
+                    style: textLabel.copyWith(fontSize: 12),
+                  ),
+                  const SizedBox(height: 15),
+
+                  // กล่องเลื่อนดู Vendor (จำกัดความสูงไว้จะได้ไม่ล้นจอ)
+                  Container(
+                    height: 200,
+                    decoration: BoxDecoration(
+                      color: vtCard,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: _buildVendorList(vendorResults),
+                  ),
+                ] else ...[
+                  // ถ้าไม่มีข้อมูลละเอียด (สแกนเก่าๆ)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: vtCard,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      "Detailed vendor reports are not available for legacy scans.",
+                      style: textDescription.copyWith(
+                        fontSize: 12,
+                        fontStyle: FontStyle.italic,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ],
+              ], // End of Column children array
+            ), // End of Column
+          ), // End of Padding
+        ), // End of Dialog
+      ); // End of Builder return BackdropFilter
     },
   );
 }

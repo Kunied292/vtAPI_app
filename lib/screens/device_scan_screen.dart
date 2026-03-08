@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; // <--- เพิ่มสำหรับ MethodChannel
 import 'package:installed_apps/installed_apps.dart';
 import 'package:installed_apps/app_info.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 import '../services/vt_api.dart';
 import 'analysis_loading_screen.dart';
 import '../const/my_const.dart';
@@ -166,14 +167,11 @@ class _DeviceScanScreenState extends State<DeviceScanScreen> {
                                     width: 64,
                                     height: 40,
                                     child: Center(
-                                      child: SizedBox(
-                                        width: 24,
-                                        height: 24,
-                                        child: CircularProgressIndicator(
-                                          color: vtAccent,
-                                          strokeWidth: 2,
-                                        ),
-                                      ),
+                                      child:
+                                          LoadingAnimationWidget.progressiveDots(
+                                            color: vtAccent,
+                                            size: 30,
+                                          ),
                                     ),
                                   )
                                 : ElevatedButton(

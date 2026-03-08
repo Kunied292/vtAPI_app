@@ -4,6 +4,7 @@ import '../services/firestore_service.dart';
 import '../const/my_const.dart';
 import '../widgets/scan_details_dialog.dart';
 import '../models/scan_history_model.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -171,8 +172,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         itemCount: docs.length,
                         itemBuilder: (context, index) {
                           final data = docs[index];
+                          final delayMs = (index < 6 ? index * 100 : 0).ms;
 
-                          return _buildHistoryItem(context, data);
+                          return _buildHistoryItem(context, data)
+                              .animate(
+                                key: ValueKey(data.id),
+                              ) // ใช้ ID เป็น key เพื่อให้แอนิเมชันทำงานเมื่อข้อมูลสลับ
+                              .fade(duration: 400.ms, delay: delayMs)
+                              .slideX(
+                                begin: 0.1,
+                                duration: 400.ms,
+                                curve: Curves.easeOut,
+                                delay: delayMs,
+                              );
                         },
                       ),
                     ),

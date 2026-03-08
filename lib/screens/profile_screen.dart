@@ -5,6 +5,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'signin_screen.dart';
 import '../const/my_const.dart';
 import '../widgets/vt_primary_button_widget.dart';
+import 'notification_screen.dart';
 import '../services/vt_api.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -132,6 +133,16 @@ class ProfileScreen extends StatelessWidget {
             FontAwesomeIcons.bell,
             "ALERTS & NOTIFICATIONS",
             isEnabled: !isGuest,
+            onTap: () {
+              if (user != null) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const NotificationScreen(),
+                  ),
+                );
+              }
+            },
           ),
 
           const Spacer(),
