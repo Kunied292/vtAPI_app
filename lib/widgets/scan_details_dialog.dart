@@ -32,10 +32,10 @@ void showScanDetailsDialog(BuildContext context, ScanHistoryModel data) {
       return BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
         child: Dialog(
-          backgroundColor: vtBackground,
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
-            side: const BorderSide(color: vtCard, width: 2),
+            side: BorderSide(color: Theme.of(context).cardColor, width: 2),
           ),
           child: Padding(
             padding: const EdgeInsets.all(20.0),
@@ -117,7 +117,7 @@ void showScanDetailsDialog(BuildContext context, ScanHistoryModel data) {
                           formattedDate,
                           style: textLabel.copyWith(
                             fontSize: 12,
-                            color: Colors.white,
+                            color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
                       ],
@@ -147,10 +147,10 @@ void showScanDetailsDialog(BuildContext context, ScanHistoryModel data) {
                   Container(
                     height: 200,
                     decoration: BoxDecoration(
-                      color: vtCard,
+                      color: Theme.of(context).cardColor,
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: _buildVendorList(vendorResults),
+                    child: _buildVendorList(context, vendorResults),
                   ),
                 ] else ...[
                   // ถ้าไม่มีข้อมูลละเอียด (สแกนเก่าๆ)
@@ -158,7 +158,7 @@ void showScanDetailsDialog(BuildContext context, ScanHistoryModel data) {
                     width: double.infinity,
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: vtCard,
+                      color: Theme.of(context).cardColor,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
@@ -180,7 +180,10 @@ void showScanDetailsDialog(BuildContext context, ScanHistoryModel data) {
   );
 }
 
-Widget _buildVendorList(Map<String, dynamic> vendorResults) {
+Widget _buildVendorList(
+  BuildContext context,
+  Map<String, dynamic> vendorResults,
+) {
   // ดึงคีย์และจัดเรียงคล้ายๆ กับหน้า ResultScreen
   const Color vtGrey = Colors.grey;
   final vendorNames = vendorResults.keys.toList();
@@ -233,7 +236,9 @@ Widget _buildVendorList(Map<String, dynamic> vendorResults) {
                 vendorName,
                 style: textLabel.copyWith(
                   fontSize: 11,
-                  color: vColor == vtGrey ? Colors.grey : Colors.white,
+                  color: vColor == vtGrey
+                      ? Colors.grey
+                      : Theme.of(context).colorScheme.onSurface,
                 ),
                 overflow: TextOverflow.ellipsis,
               ),

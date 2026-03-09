@@ -5,12 +5,19 @@ import 'screens/scan_option_screen.dart';
 //import 'screens/signin_screen.dart';
 import 'const/my_const.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:provider/provider.dart';
+import 'providers/theme_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await dotenv.load(fileName: ".env");
-  runApp(const VTScannerApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => ThemeProvider(),
+      child: const VTScannerApp(),
+    ),
+  );
 }
 
 class VTScannerApp extends StatelessWidget {
@@ -21,16 +28,9 @@ class VTScannerApp extends StatelessWidget {
     return MaterialApp(
       title: 'VT Scanner',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        scaffoldBackgroundColor: vtBackground,
-        brightness: Brightness.dark,
-        fontFamily: 'Courier', // ใช้ฟอนต์แนว Tech
-        appBarTheme: const AppBarTheme(
-          backgroundColor: vtBackground,
-          elevation: 0,
-          centerTitle: true,
-        ),
-      ),
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: Provider.of<ThemeProvider>(context).themeMode,
       home: ScanOptionScreen(),
     );
   }

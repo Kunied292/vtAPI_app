@@ -5,6 +5,7 @@ import '../const/my_const.dart';
 import '../services/vt_api.dart';
 import '../services/firestore_service.dart';
 import '../models/scan_history_model.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 class AnalyzingScreen extends StatefulWidget {
   final String targetName; // รับชื่อไฟล์ หรือ URL มาเพื่อแสดงบนจอ
@@ -24,7 +25,6 @@ class AnalyzingScreen extends StatefulWidget {
 class _AnalyzingScreenState extends State<AnalyzingScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
-  late Animation<double> _pulseAnimation;
 
   String _statusText = "INITIALIZING SECURE CONNECTION...";
 
@@ -32,16 +32,13 @@ class _AnalyzingScreenState extends State<AnalyzingScreen>
   void initState() {
     super.initState();
 
-    // 1. ตั้งค่า Animation ให้กระเพื่อมเข้าออก (Pulse) ใช้เวลา 1 วินาที
+    // 1. ตั้งค่า Animation ให้เป็นคลื่นโซนาร์กระจายออก
     _animationController = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 1),
-    )..repeat(reverse: true); // สั่งให้เล่นวนลูปไป-กลับ
-
-    // กำหนดขนาดการขยายตัว (จาก 1 เท่า ไป 1.5 เท่า)
-    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.5).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
-    );
+      duration: const Duration(
+        seconds: 3,
+      ), // รอบละ 3 วินาทีเพื่อให้คลื่นดูนุ่มนวล
+    )..repeat(); // วนลูปการแผ่ออกไปเรื่อยๆ ทิศทางเดียว
 
     // 2. เริ่มจำลองการทำงานของแอป (เปลี่ยนข้อความไปเรื่อยๆ)
     _pollScanResult();
@@ -115,9 +112,10 @@ class _AnalyzingScreenState extends State<AnalyzingScreen>
                 )
                 .then((result) {
                   result.fold(
-                    (failure) =>
-                        print("Failed to save history: ${failure.message}"),
-                    (_) => print("History saved successfully."),
+                    (failure) => debugPrint(
+                      "Failed to save history: ${failure.message}",
+                    ),
+                    (_) => debugPrint("History saved successfully."),
                   );
                 });
 
@@ -158,41 +156,58 @@ class _AnalyzingScreenState extends State<AnalyzingScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: vtBackground,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             // ส่วนประกอบของ Animation
             AnimatedBuilder(
-              animation: _pulseAnimation,
+              animation: _animationController,
               builder: (context, child) {
                 return Stack(
                   alignment: Alignment.center,
                   children: [
-                    // วงแหวนที่ขยายตัว (Ripple)
-                    Container(
-                      width: 100 * _pulseAnimation.value, // ขยายตามค่าอนิเมชัน
-                      height: 100 * _pulseAnimation.value,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: vtAccent.withValues(
-                          alpha: 0.2 / _pulseAnimation.value,
-                        ), // ยิ่งกว้างยิ่งจาง
-                      ),
-                    ),
+                    // วงแหวนโซนาร์ 3 วงซ้อนกัน
+                    ...List.generate(3, (index) {
+                      double progress =
+                          (_animationController.value - (index * 0.3333)) % 1.0;
+                      if (progress < 0) progress += 1.0;
+
+                      return Transform.scale(
+                        scale:
+                            1.0 +
+                            (progress * 2.5), // ขยายจาก 1 เท่า ไป 3.5 เท่า
+                        child: Container(
+                          width: 80,
+                          height: 80,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: vtAccent.withValues(
+                              alpha: (1.0 - progress) * 0.1,
+                            ), // พื้นในจางๆ
+                            border: Border.all(
+                              color: vtAccent.withValues(
+                                alpha: 1.0 - progress,
+                              ), // ขอบค่อยๆ จาง
+                              width: 2,
+                            ),
+                          ),
+                        ),
+                      );
+                    }),
                     // ไอคอนตรงกลาง (ไม่ขยายตัว)
                     Container(
                       width: 80,
                       height: 80,
                       decoration: BoxDecoration(
-                        color: vtBackground,
+                        color: Theme.of(context).scaffoldBackgroundColor,
                         shape: BoxShape.circle,
                         border: Border.all(color: vtAccent, width: 2),
                       ),
-                      child: const Icon(
-                        Icons.radar,
-                        color: Colors.white,
+                      child: Icon(
+                        LucideIcons.radar,
+                        color: Theme.of(context).colorScheme.onSurface,
                         size: 40,
                       ),
                     ),
@@ -201,7 +216,7 @@ class _AnalyzingScreenState extends State<AnalyzingScreen>
               },
             ),
 
-            const SizedBox(height: 60),
+            const SizedBox(height: 120),
 
             // ข้อความที่เปลี่ยนไปเรื่อยๆ
             Text(
@@ -209,10 +224,20 @@ class _AnalyzingScreenState extends State<AnalyzingScreen>
               style: textLabel.copyWith(fontSize: 20, letterSpacing: 2),
             ),
             const SizedBox(height: 10),
-            Center(
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 32),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              decoration: BoxDecoration(
+                color: vtAccent.withValues(alpha: 0.05),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: vtAccent.withValues(alpha: 0.3)),
+              ),
               child: Text(
                 widget.targetName,
                 style: textLabel.copyWith(fontSize: 14, color: vtAccent),
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
             const SizedBox(height: 30),

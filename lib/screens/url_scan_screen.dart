@@ -26,7 +26,7 @@ class _UrlScanScreenState extends State<UrlScanScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: vtBackground,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       // บังคับไม่ให้คีย์บอร์ดดันหน้าจอเละ
       resizeToAvoidBottomInset: false,
       appBar: const CustomAppBar(title: 'URL ANALYSIS'),
@@ -44,12 +44,14 @@ class _UrlScanScreenState extends State<UrlScanScreen> {
             // ช่องกรอก URL
             TextField(
               controller: _urlController,
-              style: textLabel.copyWith(color: Colors.white),
+              style: textLabel.copyWith(
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
               decoration: InputDecoration(
                 hintText: "https://...",
                 hintStyle: textLabel.copyWith(color: Colors.grey, fontSize: 14),
                 filled: true,
-                fillColor: vtCard,
+                fillColor: Theme.of(context).cardColor,
                 prefixIcon: const Icon(Icons.link, color: Colors.grey),
                 // ขอบตอนไม่ได้กด
                 enabledBorder: OutlineInputBorder(

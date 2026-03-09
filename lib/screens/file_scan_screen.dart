@@ -4,6 +4,7 @@ import '../services/vt_api.dart';
 import 'analysis_loading_screen.dart';
 import '../const/my_const.dart';
 import '../widgets/custom_app_bar_widget.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 // 1. เปลี่ยนจาก StatelessWidget เป็น StatefulWidget
 class FileScanScreen extends StatefulWidget {
@@ -70,7 +71,7 @@ class _FileScanScreenState extends State<FileScanScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: vtBackground,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: const CustomAppBar(title: 'FILE UPLOAD'),
       body: Padding(
         padding: const EdgeInsets.all(24.0),
@@ -91,7 +92,7 @@ class _FileScanScreenState extends State<FileScanScreen> {
                 child: Container(
                   width: double.infinity,
                   decoration: BoxDecoration(
-                    color: vtCard,
+                    color: Theme.of(context).cardColor,
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
                       color: _isLoading
@@ -108,14 +109,15 @@ class _FileScanScreenState extends State<FileScanScreen> {
                     children: _isLoading
                         ? [
                             // หน้าตาตอน "กำลังโหลด"
-                            const CircularProgressIndicator(
-                              color: Color(0xFF3B82F6),
+                            LoadingAnimationWidget.fourRotatingDots(
+                              color: vtAccent,
+                              size: 30,
                             ),
                             const SizedBox(height: 20),
                             Text(
                               "UPLOADING FILE...",
                               style: textLabel.copyWith(
-                                color: Colors.white,
+                                color: Theme.of(context).colorScheme.onSurface,
                                 fontSize: 18,
                               ),
                             ),
@@ -136,7 +138,7 @@ class _FileScanScreenState extends State<FileScanScreen> {
                             Text(
                               "TAP TO BROWSE",
                               style: textLabel.copyWith(
-                                color: Colors.white,
+                                color: Theme.of(context).colorScheme.onSurface,
                                 fontSize: 18,
                               ),
                             ),

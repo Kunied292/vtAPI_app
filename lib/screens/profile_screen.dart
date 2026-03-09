@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'signin_screen.dart';
+import 'manage_account_screen.dart';
+import 'setting_screen.dart';
+import 'help_screen.dart';
+import 'about_screen.dart';
 import '../const/my_const.dart';
 import '../widgets/vt_primary_button_widget.dart';
-import 'notification_screen.dart';
 import '../services/vt_api.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -17,200 +19,140 @@ class ProfileScreen extends StatelessWidget {
     final user = FirebaseAuth.instance.currentUser;
     final bool isGuest = user == null;
 
-    return Padding(
+    return ListView(
       padding: const EdgeInsets.all(24.0),
+      children: [
+        if (isGuest) ...[
+          _buildGuestHeader(context),
+          const SizedBox(height: 30),
+        ],
+
+        if (!isGuest) ...[
+          _buildMenuRow(
+            context,
+            FontAwesomeIcons.solidUser,
+            "MANAGE ACCOUNT",
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const ManageAccountScreen(),
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 12),
+        ],
+
+        _buildMenuRow(
+          context,
+          FontAwesomeIcons.chartLine,
+          "API USAGE",
+          onTap: () {
+            _showApiUsageDialog(context);
+          },
+        ),
+        const SizedBox(height: 12),
+
+        _buildMenuRow(
+          context,
+          Icons.settings,
+          "SETTINGS",
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const SettingScreen()),
+            );
+          },
+        ),
+        const SizedBox(height: 12),
+
+        _buildMenuRow(
+          context,
+          Icons.help_outline,
+          "HELP & SUPPORT",
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const HelpScreen()),
+            );
+          },
+        ),
+        const SizedBox(height: 12),
+
+        _buildMenuRow(
+          context,
+          Icons.info_outline,
+          "ABOUT APP",
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const AboutScreen()),
+            );
+          },
+        ),
+        const SizedBox(height: 30),
+      ],
+    );
+  }
+
+  Widget _buildGuestHeader(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: vtAccent.withValues(alpha: 0.3)),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // --- ส่วน Header ---
-          isGuest
-              ? _buildGuestHeader()
-              : StreamBuilder<DocumentSnapshot>(
-                  stream: FirebaseFirestore.instance
-                      .collection('users')
-                      .doc(user.uid)
-                      .snapshots(),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator());
-                    }
-
-                    String userName = 'PRO USER';
-                    String? photoUrl;
-
-                    if (snapshot.hasData && snapshot.data!.exists) {
-                      final data =
-                          snapshot.data!.data() as Map<String, dynamic>;
-                      userName = data['name'] ?? 'PRO USER';
-                      photoUrl = data['photoUrl'];
-                    }
-
-                    return Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(3),
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(color: vtAccent, width: 2),
-                          ),
-                          child: CircleAvatar(
-                            radius: 35,
-                            backgroundColor: vtCard,
-                            // เช็คถ้ามี photoUrl ให้แสดงรูป ไม่ก็โชว์ไอคอนคน
-                            backgroundImage: photoUrl != null
-                                ? (photoUrl.startsWith('assets/')
-                                      ? AssetImage(photoUrl)
-                                      : NetworkImage(photoUrl) as ImageProvider)
-                                : null,
-                            child: photoUrl == null
-                                ? const Icon(
-                                    Icons.person,
-                                    size: 40,
-                                    color: Colors.grey,
-                                  )
-                                : null,
-                          ),
-                        ),
-                        const SizedBox(width: 20),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                userName,
-                                style: textLabel.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  letterSpacing: 1.5,
-                                  fontSize: 20,
-                                  color: vtTextPrimary,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              const SizedBox(height: 5),
-                              Text(
-                                user.email ?? "No Email",
-                                style: textDescription.copyWith(
-                                  color: vtAccent,
-                                  fontSize: 12,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    );
-                  },
-                ),
-
-          const SizedBox(height: 40),
-          Text("PREFERENCES", style: textDescription),
+          Row(
+            children: [
+              const Icon(Icons.no_accounts, color: Colors.grey, size: 32),
+              const SizedBox(width: 15),
+              Text(
+                "You're not signed in",
+                style: textTitle.copyWith(fontSize: 18),
+              ),
+            ],
+          ),
           const SizedBox(height: 15),
-
-          _buildMenuRow(
-            FontAwesomeIcons.imagePortrait,
-            "CHANGE PROFILE PICTURE",
-            isEnabled: !isGuest,
-            onTap: () {
-              if (user != null) {
-                _showProfilePicturePicker(context, user);
-              }
-            },
+          Text(
+            "Sign in to access all features, sync your history, and unlock API usage tracking.",
+            style: textDescription.copyWith(height: 1.5),
           ),
-          const SizedBox(height: 12),
-          _buildMenuRow(
-            FontAwesomeIcons.key,
-            "API KEYS CONFIGURATION",
-            isEnabled: !isGuest,
-            onTap: () {
-              if (user != null) {
-                _showApiUsageDialog(context);
-              }
-            },
-          ),
-          const SizedBox(height: 12),
-          _buildMenuRow(
-            FontAwesomeIcons.bell,
-            "ALERTS & NOTIFICATIONS",
-            isEnabled: !isGuest,
-            onTap: () {
-              if (user != null) {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const NotificationScreen(),
-                  ),
-                );
-              }
-            },
-          ),
-
-          const Spacer(),
-
-          // --- ปุ่ม Action (Sign In / Sign Out) ---
+          const SizedBox(height: 25),
           SizedBox(
             width: double.infinity,
-            height: 55,
-            child: isGuest
-                ? VTPrimaryButton(
-                    text: "SIGN IN TO UNLOCK FEATURES",
-                    textColor: Colors.white,
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const SignInScreen(),
-                        ),
-                      );
-                    },
-                  )
-                : OutlinedButton.icon(
-                    onPressed: () async {
-                      await FirebaseAuth.instance.signOut();
-                      if (context.mounted) {
-                        Navigator.pushAndRemoveUntil(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const SignInScreen(),
-                          ),
-                          (route) => false,
-                        );
-                      }
-                    },
-                    icon: const Icon(FontAwesomeIcons.powerOff, color: vtRed),
-                    label: Text(
-                      "LOG OUT",
-                      style: textLabel.copyWith(
-                        color: vtRed,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
-                    style: OutlinedButton.styleFrom(
-                      side: BorderSide(color: vtRed.withValues(alpha: 0.5)),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                    ),
-                  ),
+            height: 50,
+            child: VTPrimaryButton(
+              text: "SIGN IN",
+              textColor: Theme.of(context).colorScheme.onSurface,
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const SignInScreen()),
+                );
+              },
+            ),
           ),
-          const SizedBox(height: 20),
         ],
       ),
     );
   }
 
   Widget _buildMenuRow(
+    BuildContext context,
     IconData icon,
     String text, {
-    bool isEnabled = true,
     VoidCallback? onTap,
   }) {
     return Material(
-      color: vtCard,
+      color: Theme.of(context).cardColor,
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
-        onTap: isEnabled ? (onTap ?? () {}) : null,
+        onTap: onTap,
         borderRadius: BorderRadius.circular(16),
         child: Padding(
           padding: const EdgeInsets.all(20),
@@ -218,7 +160,7 @@ class ProfileScreen extends StatelessWidget {
             children: [
               Icon(
                 icon,
-                color: isEnabled ? Colors.white : Colors.grey.shade700,
+                color: Theme.of(context).colorScheme.onSurface,
                 size: 24,
               ),
               const SizedBox(width: 20),
@@ -226,152 +168,17 @@ class ProfileScreen extends StatelessWidget {
                 child: Text(
                   text,
                   style: textLabel.copyWith(
-                    color: isEnabled ? Colors.white : Colors.grey.shade700,
+                    color: Theme.of(context).colorScheme.onSurface,
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
                   ),
                 ),
               ),
-              if (isEnabled)
-                const Icon(
-                  Icons.arrow_forward_ios,
-                  color: Colors.grey,
-                  size: 16,
-                ),
+              const Icon(Icons.arrow_forward_ios, color: Colors.grey, size: 16),
             ],
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildGuestHeader() {
-    return Row(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(3),
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(color: Colors.grey, width: 2),
-          ),
-          child: const CircleAvatar(
-            radius: 35,
-            backgroundColor: vtCard,
-            child: Icon(Icons.person_outline, size: 40, color: Colors.grey),
-          ),
-        ),
-        const SizedBox(width: 20),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                "GUEST USER",
-                style: textLabel.copyWith(
-                  fontSize: 20,
-                  letterSpacing: 1.5,
-                  color: vtTextPrimary,
-                ),
-              ),
-              const SizedBox(height: 5),
-              Text(
-                "Sign in to sync your history",
-                style: textDescription.copyWith(
-                  color: Colors.grey,
-                  fontSize: 12,
-                ),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  void _showProfilePicturePicker(BuildContext context, User user) {
-    final List<String> profileImages = [
-      'assets/profile_images/aldi-sigun-K-sdQ12jZeY-unsplash.jpg',
-      'assets/profile_images/alison-wang-mou0S7ViElQ-unsplash.jpg',
-      'assets/profile_images/anshita-nair-0rxLLHD1XxA-unsplash.jpg',
-      'assets/profile_images/luthfi-alfarizi-xRMK0ea-Of4-unsplash.jpg',
-      'assets/profile_images/shubham-dhage-t0Bv0OBQuTg-unsplash.jpg',
-    ];
-
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: vtBackground,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) {
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SizedBox(height: 20),
-              Container(
-                width: 40,
-                height: 5,
-                decoration: BoxDecoration(
-                  color: Colors.grey.withValues(alpha: 0.5),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              const SizedBox(height: 20),
-              Text(
-                "Select Profile Picture",
-                style: textTitle.copyWith(fontSize: 18),
-              ),
-              const SizedBox(height: 20),
-              SizedBox(
-                height: 120,
-                child: ListView.separated(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  scrollDirection: Axis.horizontal,
-                  itemCount: profileImages.length,
-                  separatorBuilder: (context, index) =>
-                      const SizedBox(width: 15),
-                  itemBuilder: (context, index) {
-                    final imagePath = profileImages[index];
-                    return GestureDetector(
-                      onTap: () async {
-                        Navigator.pop(context); // ปิด popup
-
-                        // อัปเดตข้อมูลบน Firestore
-                        await FirebaseFirestore.instance
-                            .collection('users')
-                            .doc(user.uid)
-                            .update({'photoUrl': imagePath});
-
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                "Profile picture updated successfully!",
-                                style: textLabel.copyWith(
-                                  fontSize: 12,
-                                  color: Colors.white,
-                                ),
-                              ),
-                              backgroundColor: Colors.green,
-                            ),
-                          );
-                        }
-                      },
-                      child: CircleAvatar(
-                        radius: 50,
-                        backgroundImage: AssetImage(imagePath),
-                      ),
-                    );
-                  },
-                ),
-              ),
-              const SizedBox(height: 30),
-            ],
-          ),
-        );
-      },
     );
   }
 
@@ -380,7 +187,7 @@ class ProfileScreen extends StatelessWidget {
       context: context,
       builder: (context) {
         return Dialog(
-          backgroundColor: vtCard,
+          backgroundColor: Theme.of(context).cardColor,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
@@ -454,7 +261,11 @@ class ProfileScreen extends StatelessWidget {
                         return Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _buildUsageRow("Today's Requests", totalUsedToday),
+                            _buildUsageRow(
+                              context,
+                              "Today's Requests",
+                              totalUsedToday,
+                            ),
                           ],
                         );
                       },
@@ -483,7 +294,7 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildUsageRow(String title, int usedCount) {
+  Widget _buildUsageRow(BuildContext context, String title, int usedCount) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -493,7 +304,7 @@ class ProfileScreen extends StatelessWidget {
             Text(
               title,
               style: textDescription.copyWith(
-                color: Colors.white,
+                color: Theme.of(context).colorScheme.onSurface,
                 fontWeight: FontWeight.bold,
               ),
             ),

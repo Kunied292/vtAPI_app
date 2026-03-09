@@ -8,7 +8,7 @@ class NotificationScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: vtBackground,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: const CustomAppBar(title: 'NOTIFICATION'),
       body: Center(child: Text('under development', style: textDescription)),
     );

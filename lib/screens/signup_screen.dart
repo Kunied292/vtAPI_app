@@ -66,7 +66,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
         SnackBar(
           content: Text(
             "Please fill all fields",
-            style: textLabel.copyWith(fontSize: 12, color: Colors.white),
+            style: textLabel.copyWith(
+              fontSize: 12,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
           ),
           backgroundColor: Colors.redAccent,
         ),
@@ -82,7 +85,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
         SnackBar(
           content: Text(
             "Please meet all password requirements",
-            style: textLabel.copyWith(fontSize: 12, color: Colors.white),
+            style: textLabel.copyWith(
+              fontSize: 12,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
           ),
           backgroundColor: Colors.redAccent,
         ),
@@ -96,7 +102,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
         SnackBar(
           content: Text(
             "Passwords do not match",
-            style: textLabel.copyWith(fontSize: 12, color: Colors.white),
+            style: textLabel.copyWith(
+              fontSize: 12,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
           ),
           backgroundColor: Colors.redAccent,
         ),
@@ -124,7 +133,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
             SnackBar(
               content: Text(
                 failure.message,
-                style: textLabel.copyWith(fontSize: 12, color: Colors.white),
+                style: textLabel.copyWith(
+                  fontSize: 12,
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
               ),
               backgroundColor: Colors.redAccent,
             ),
@@ -145,7 +157,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: vtBackground,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: const CustomAppBar(title: ''),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -260,7 +272,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         hintText: hint,
         hintStyle: textDescription,
         filled: true,
-        fillColor: vtCard,
+        fillColor: Theme.of(context).cardColor,
         prefixIcon: Icon(icon, color: Colors.grey),
         suffixIcon: isPassword
             ? IconButton(

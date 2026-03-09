@@ -103,7 +103,7 @@ class _DeviceScanScreenState extends State<DeviceScanScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: vtBackground,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: const CustomAppBar(title: 'DEVICE APPS SCAN'),
       body: _isLoadingApps
           ? Center(
@@ -137,7 +137,7 @@ class _DeviceScanScreenState extends State<DeviceScanScreen> {
                         return Container(
                           margin: const EdgeInsets.only(bottom: 12),
                           decoration: BoxDecoration(
-                            color: vtCard,
+                            color: Theme.of(context).cardColor,
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: ListTile(

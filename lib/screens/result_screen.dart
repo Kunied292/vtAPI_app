@@ -54,12 +54,15 @@ class _ResultScreenState extends State<ResultScreen> {
     final String score = "${widget.maliciousCount} / ${widget.totalEngines}";
 
     return Scaffold(
-      backgroundColor: vtBackground,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: CustomAppBar(
         title: '',
         automaticallyImplyLeading: false,
         trailing: IconButton(
-          icon: const Icon(Icons.close, color: Colors.white),
+          icon: Icon(
+            Icons.close,
+            color: Theme.of(context).colorScheme.onSurface,
+          ),
           onPressed: () =>
               Navigator.popUntil(context, (route) => route.isFirst),
         ),
@@ -147,7 +150,7 @@ class _ResultScreenState extends State<ResultScreen> {
                     margin: const EdgeInsets.only(bottom: 8),
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: vtCard,
+                      color: Theme.of(context).cardColor,
                       borderRadius: BorderRadius.circular(8),
                       border: Border(left: BorderSide(color: vColor, width: 4)),
                     ),
@@ -164,7 +167,7 @@ class _ResultScreenState extends State<ResultScreen> {
                                 style: TextStyle(
                                   color: vColor == vtGrey
                                       ? Colors.grey
-                                      : Colors.white,
+                                      : Theme.of(context).colorScheme.onSurface,
                                   fontFamily:
                                       GoogleFonts.jetBrainsMono().fontFamily,
                                   fontWeight: FontWeight.bold,

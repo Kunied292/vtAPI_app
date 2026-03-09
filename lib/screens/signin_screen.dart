@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import 'signup_screen.dart';
 import 'scan_option_screen.dart';
@@ -42,7 +42,10 @@ class _SignInScreenState extends State<SignInScreen> {
         SnackBar(
           content: Text(
             "Please enter both email and password",
-            style: textLabel.copyWith(fontSize: 12, color: Colors.white),
+            style: textLabel.copyWith(
+              fontSize: 12,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
           ),
           backgroundColor: Colors.redAccent,
         ),
@@ -66,7 +69,10 @@ class _SignInScreenState extends State<SignInScreen> {
             SnackBar(
               content: Text(
                 failure.message,
-                style: textLabel.copyWith(fontSize: 12, color: Colors.white),
+                style: textLabel.copyWith(
+                  fontSize: 12,
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
               ),
               backgroundColor: Colors.redAccent,
             ),
@@ -116,7 +122,7 @@ class _SignInScreenState extends State<SignInScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: vtBackground,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -201,29 +207,48 @@ class _SignInScreenState extends State<SignInScreen> {
 
                 const SizedBox(height: 30),
 
-                // --- ปุ่ม Social Login ---
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _buildSocialButton(
-                      FontAwesomeIcons.google,
-                      " Google",
-                      onTap: _handleGoogleSignIn,
-                      isLoading: _isGoogleLoading,
+                // --- ปุ่ม Google Sign In ---
+                InkWell(
+                  onTap: _isAnyLoading ? null : _handleGoogleSignIn,
+                  borderRadius: BorderRadius.circular(16),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 14,
                     ),
-                    const SizedBox(width: 10),
-                    _buildSocialButton(
-                      FontAwesomeIcons.facebook,
-                      " Facebook",
-                      onTap: _handleGoogleSignIn,
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).cardColor,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: Colors.grey.withValues(alpha: 0.2),
+                      ),
                     ),
-                    const SizedBox(width: 10),
-                    _buildSocialButton(
-                      FontAwesomeIcons.github,
-                      " GitHub",
-                      onTap: _handleGoogleSignIn,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (_isGoogleLoading)
+                          SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(
+                              color: Theme.of(context).colorScheme.onSurface,
+                              strokeWidth: 2.5,
+                            ),
+                          )
+                        else
+                          SvgPicture.asset(
+                            'assets/logo/Google__G__logo.svg',
+                            width: 24,
+                            height: 24,
+                          ),
+                        const SizedBox(width: 12),
+                        Text(
+                          "Continue with Google",
+                          style: textLabel.copyWith(fontSize: 14),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
 
                 const SizedBox(height: 40),
@@ -276,7 +301,7 @@ class _SignInScreenState extends State<SignInScreen> {
         hintText: hint,
         hintStyle: textDescription,
         filled: true,
-        fillColor: vtCard,
+        fillColor: Theme.of(context).cardColor,
         prefixIcon: Icon(icon, color: Colors.grey),
         suffixIcon: isPassword
             ? IconButton(
@@ -295,46 +320,6 @@ class _SignInScreenState extends State<SignInScreen> {
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide(color: vtAccent, width: 2),
-        ),
-      ),
-    );
-  }
-
-  // Widget สร้างปุ่ม Social
-  Widget _buildSocialButton(
-    IconData icon,
-    String label, {
-    VoidCallback? onTap,
-    bool isLoading = false,
-  }) {
-    return InkWell(
-      onTap: _isAnyLoading ? null : onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: vtCard,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
-        ),
-        child: Row(
-          children: [
-            if (isLoading)
-              const SizedBox(
-                width: 30,
-                height: 30,
-                child: Padding(
-                  padding: EdgeInsets.all(6.0),
-                  child: CircularProgressIndicator(
-                    color: Colors.white,
-                    strokeWidth: 2.5,
-                  ),
-                ),
-              )
-            else
-              Icon(icon, color: Colors.white, size: 30),
-            Text(label, style: textLabel.copyWith(fontSize: 12)),
-          ],
         ),
       ),
     );

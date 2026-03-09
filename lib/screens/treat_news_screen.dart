@@ -105,7 +105,7 @@ class _ThreatIntelScreenState extends State<ThreatIntelScreen> {
 
                     return RefreshIndicator(
                       color: vtAccent,
-                      backgroundColor: vtCard,
+                      backgroundColor: Theme.of(context).cardColor,
                       onRefresh: () async {
                         setState(() {
                           _newsFuture = _newsService.getCyberNews();
@@ -146,7 +146,7 @@ class _ThreatIntelScreenState extends State<ThreatIntelScreen> {
                           return Container(
                                 margin: const EdgeInsets.only(bottom: 16),
                                 decoration: BoxDecoration(
-                                  color: vtCard,
+                                  color: Theme.of(context).cardColor,
                                   borderRadius: BorderRadius.circular(16),
                                   border: Border.all(
                                     color: isCritical

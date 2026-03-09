@@ -4,7 +4,6 @@ import 'file_scan_screen.dart';
 import 'url_scan_screen.dart';
 import 'dashboard_screen.dart';
 import 'profile_screen.dart';
-import 'setting_screen.dart';
 import 'treat_news_screen.dart';
 import 'device_scan_screen.dart';
 
@@ -24,7 +23,7 @@ class _ScanOptionScreenState extends State<ScanOptionScreen> {
   int _selectedIndex = 0;
 
   // รายชื่อหน้าจอที่จะให้สลับไปมาตาม Bottom Nav Bar
-  late final List<Widget> _pages = [
+  List<Widget> get _pages => [
     _buildScannerHome(), // Index 0: หน้า Scanner เดิม
     const DashboardScreen(), // Index 1: หน้า Dashboard
     const ThreatIntelScreen(), // Index 2: หน้า Threat Intel
@@ -33,10 +32,10 @@ class _ScanOptionScreenState extends State<ScanOptionScreen> {
 
   // ชื่อ Title ของแต่ละหน้า
   final List<String> _titles = [
-    'VIRUS SCANNER',
+    'VT SCANNER',
     'DASHBOARD',
     'THREAT INTEL',
-    'USER PROFILE',
+    'ACCOUNT',
   ];
 
   void _onItemTapped(int index) {
@@ -48,22 +47,10 @@ class _ScanOptionScreenState extends State<ScanOptionScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: vtBackground,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: CustomAppBar(
         title: _titles[_selectedIndex], // เปลี่ยน Title ตามหน้าที่เลือก
-        trailing: _selectedIndex == 0
-            ? IconButton(
-                icon: const Icon(Icons.settings),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const SettingScreen(),
-                    ),
-                  );
-                },
-              )
-            : null,
+        centerTitle: false, // ชิดซ้ายทั้งหมด
       ),
 
       // สลับ Widget ของ body ตาม Index ที่ถูกคลิก พร้อมทำ Animation
@@ -75,7 +62,7 @@ class _ScanOptionScreenState extends State<ScanOptionScreen> {
       bottomNavigationBar: SizedBox(
         height: 100, // ยืดความสูงขึ้นเล็กน้อย
         child: BottomNavigationBar(
-          backgroundColor: vtCard,
+          backgroundColor: Theme.of(context).cardColor,
           unselectedItemColor: vtTextSecondary,
           selectedItemColor: vtAccent,
           currentIndex: _selectedIndex,
@@ -100,7 +87,7 @@ class _ScanOptionScreenState extends State<ScanOptionScreen> {
             BottomNavigationBarItem(
               icon: Icon(Icons.person_outline),
               activeIcon: Icon(Icons.person),
-              label: 'Profile',
+              label: 'Account',
             ),
           ],
           selectedLabelStyle: textDescription,
@@ -115,13 +102,100 @@ class _ScanOptionScreenState extends State<ScanOptionScreen> {
     return Padding(
       padding: const EdgeInsets.all(24.0),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            "Select an option to analyze files or URLs.",
-            style: textDescription,
+          const SizedBox(height: 20),
+
+          // ปุ่มสแกนแบบวงกลมตรงกลาง
+          Center(
+            child: GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const DeviceScanScreen(),
+                  ),
+                );
+              },
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  // วงแหวนคลื่นเรดาร์ด้านหลัง
+                  Container(
+                        width: 180,
+                        height: 180,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: Colors.green.withValues(alpha: 0.8),
+                            width: 2,
+                          ),
+                        ),
+                      )
+                      .animate(onPlay: (controller) => controller.repeat())
+                      .scale(
+                        begin: const Offset(1.0, 1.0),
+                        end: const Offset(1.6, 1.6),
+                        duration: 2.seconds,
+                        curve: Curves.easeOut,
+                      )
+                      .fade(
+                        begin: 0.8,
+                        end: 0.0,
+                        duration: 2.seconds,
+                        curve: Curves.easeOut,
+                      ),
+
+                  // ปุ่มวงกลมหลัก อยู่นิ่งๆ
+                  Container(
+                    width: 180,
+                    height: 180,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.green.withValues(alpha: 0.15),
+                      border: Border.all(color: Colors.green, width: 2),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.green.withValues(alpha: 0.2),
+                          blurRadius: 30,
+                          spreadRadius: 5,
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        //Icon(Icons.radar, color: Colors.green, size: 60),
+                        SizedBox(height: 12),
+                        Text(
+                          "SCAN NOW",
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSurface,
+                            fontSize: 22, // ปรับให้ใหญ่ขึ้นนิดหน่อย
+                            fontWeight: FontWeight.w900, // หนาสุด
+                            letterSpacing: 2.0,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
+
+          const SizedBox(height: 60),
+
+          // ข้อความอธิบายการสแกนแอป
+          Text(
+            "Tap to scan your device for malicious apps\nand security threats.",
+            style: textDescription,
+            textAlign: TextAlign.center,
+          ),
+
           const SizedBox(height: 40),
+
+          // ปุ่ม File และ URL ยังคงเค้าโครงเดิม
           _buildOptionCard(
             title: "SCAN FILE",
             subtitle: "Upload file from device",
@@ -147,21 +221,6 @@ class _ScanOptionScreenState extends State<ScanOptionScreen> {
               );
             },
           ),
-          const SizedBox(height: 20),
-          _buildOptionCard(
-            title: "SCAN APP",
-            subtitle: "Check app safety",
-            icon: Icons.android,
-            color: Colors.green,
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const DeviceScanScreen(),
-                ),
-              );
-            },
-          ),
         ],
       ),
     );
@@ -180,7 +239,7 @@ class _ScanOptionScreenState extends State<ScanOptionScreen> {
       child: Container(
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          color: vtCard,
+          color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: color.withValues(alpha: 0.3), width: 1),
         ),
