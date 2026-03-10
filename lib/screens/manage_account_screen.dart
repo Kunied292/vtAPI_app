@@ -4,6 +4,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../const/my_const.dart';
 import '../widgets/custom_app_bar_widget.dart';
+import '../widgets/vt_menu_row_widget.dart';
+import '../widgets/password_criteria_widget.dart';
+import '../widgets/vt_snackbar_helper.dart';
 import 'signin_screen.dart';
 
 class ManageAccountScreen extends StatefulWidget {
@@ -59,17 +62,22 @@ class _ManageAccountScreenState extends State<ManageAccountScreen> {
                   Icons.email_outlined,
                 ),
 
-                const SizedBox(height: 40),
-                Text("SECURITY", style: textDescription),
-                const SizedBox(height: 15),
-                _buildActionRow(
-                  context,
-                  "CHANGE PASSWORD",
-                  FontAwesomeIcons.lock,
-                  onTap: () {
-                    _showChangePasswordSheet(context);
-                  },
-                ),
+                // แสดงส่วน SECURITY เฉพาะ user ที่ login ด้วย Email/Password เท่านั้น
+                // (Google Sign-In ไม่มีรหัสผ่านให้เปลี่ยน)
+                if (user.providerData.any(
+                  (p) => p.providerId == 'password',
+                )) ...[
+                  const SizedBox(height: 40),
+                  Text("SECURITY", style: textDescription),
+                  const SizedBox(height: 15),
+                  VTMenuRow(
+                    icon: FontAwesomeIcons.lock,
+                    text: "CHANGE PASSWORD",
+                    onTap: () {
+                      _showChangePasswordSheet(context);
+                    },
+                  ),
+                ],
 
                 const Spacer(),
                 SizedBox(
@@ -154,46 +162,6 @@ class _ManageAccountScreenState extends State<ManageAccountScreen> {
       ),
     );
   }
-
-  Widget _buildActionRow(
-    BuildContext context,
-    String text,
-    IconData icon, {
-    required VoidCallback onTap,
-  }) {
-    return Material(
-      color: Theme.of(context).cardColor,
-      borderRadius: BorderRadius.circular(16),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Row(
-            children: [
-              Icon(
-                icon,
-                color: Theme.of(context).colorScheme.onSurface,
-                size: 24,
-              ),
-              const SizedBox(width: 20),
-              Expanded(
-                child: Text(
-                  text,
-                  style: textLabel.copyWith(
-                    color: Theme.of(context).colorScheme.onSurface,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                  ),
-                ),
-              ),
-              const Icon(Icons.arrow_forward_ios, color: Colors.grey, size: 16),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 }
 
 // ===== Widget สำหรับฟอร์มเปลี่ยนรหัสผ่าน (StatefulWidget แยกต่างหาก) =====
@@ -249,25 +217,30 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
     if (currentPassword.isEmpty ||
         newPassword.isEmpty ||
         confirmPassword.isEmpty) {
-      _showSnackBar("Please fill all fields", Colors.redAccent);
+      showVTSnackBar(context, "Please fill all fields", Colors.redAccent);
       return;
     }
 
     // เช็คว่ารหัสผ่านใหม่ผ่านเกณฑ์
     if (!_isPasswordValid) {
-      _showSnackBar("Please meet all password requirements", Colors.redAccent);
+      showVTSnackBar(
+        context,
+        "Please meet all password requirements",
+        Colors.redAccent,
+      );
       return;
     }
 
     // เช็คว่ารหัสผ่านใหม่ 2 ช่องตรงกัน
     if (newPassword != confirmPassword) {
-      _showSnackBar("New passwords do not match", Colors.redAccent);
+      showVTSnackBar(context, "New passwords do not match", Colors.redAccent);
       return;
     }
 
     // เช็คว่ารหัสผ่านใหม่ไม่ซ้ำกับรหัสเดิม
     if (currentPassword == newPassword) {
-      _showSnackBar(
+      showVTSnackBar(
+        context,
         "New password must be different from current password",
         Colors.redAccent,
       );
@@ -292,7 +265,7 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
       if (mounted) {
         setState(() => _isLoading = false);
         Navigator.pop(context); // ปิด Bottom Sheet
-        _showSnackBar("Password changed successfully! ✓", vtGreen);
+        showVTSnackBar(context, "Password changed successfully! ✓", vtGreen);
       }
     } on FirebaseAuthException catch (e) {
       if (mounted) {
@@ -313,29 +286,18 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
           default:
             errorMessage = e.message ?? 'An error occurred.';
         }
-        _showSnackBar(errorMessage, Colors.redAccent);
+        showVTSnackBar(context, errorMessage, Colors.redAccent);
       }
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
-        _showSnackBar("An unexpected error occurred.", Colors.redAccent);
+        showVTSnackBar(
+          context,
+          "An unexpected error occurred.",
+          Colors.redAccent,
+        );
       }
     }
-  }
-
-  void _showSnackBar(String message, Color color) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          message,
-          style: textLabel.copyWith(fontSize: 12, color: Colors.white),
-        ),
-        backgroundColor: color,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        margin: const EdgeInsets.all(16),
-      ),
-    );
   }
 
   @override
@@ -419,12 +381,21 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
               // --- Checklist ตรวจความปลอดภัย ---
               if (_newPasswordController.text.isNotEmpty) ...[
                 const SizedBox(height: 12),
-                _buildCriteria("At least 8 characters", _hasMinLength),
-                _buildCriteria("Contains uppercase (A-Z)", _hasUppercase),
-                _buildCriteria("Contains number (0-9)", _hasDigits),
-                _buildCriteria(
-                  "Contains special char (!@#\$)",
-                  _hasSpecialChars,
+                PasswordCriteriaWidget(
+                  text: "At least 8 characters",
+                  isMet: _hasMinLength,
+                ),
+                PasswordCriteriaWidget(
+                  text: "Contains uppercase (A-Z)",
+                  isMet: _hasUppercase,
+                ),
+                PasswordCriteriaWidget(
+                  text: "Contains number (0-9)",
+                  isMet: _hasDigits,
+                ),
+                PasswordCriteriaWidget(
+                  text: "Contains special char (!@#\$)",
+                  isMet: _hasSpecialChars,
                 ),
               ],
               const SizedBox(height: 16),
@@ -518,30 +489,6 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
           borderRadius: BorderRadius.circular(16),
           borderSide: const BorderSide(color: vtAccent, width: 2),
         ),
-      ),
-    );
-  }
-
-  Widget _buildCriteria(String text, bool isMet) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 4.0, left: 10.0),
-      child: Row(
-        children: [
-          Icon(
-            isMet ? Icons.check_circle : Icons.radio_button_unchecked,
-            color: isMet ? vtGreen : Colors.grey,
-            size: 16,
-          ),
-          const SizedBox(width: 8),
-          Text(
-            text,
-            style: TextStyle(
-              color: isMet ? vtGreen : Colors.grey,
-              fontFamily: 'Courier',
-              fontSize: 12,
-            ),
-          ),
-        ],
       ),
     );
   }

@@ -5,6 +5,11 @@ import '../core/failure.dart';
 import '../models/scan_history_model.dart';
 
 class FirestoreService {
+  // Singleton pattern
+  static final FirestoreService _instance = FirestoreService._internal();
+  factory FirestoreService() => _instance;
+  FirestoreService._internal();
+
   final FirebaseFirestore _db = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 

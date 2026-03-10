@@ -5,6 +5,11 @@ import 'package:dartz/dartz.dart';
 import '../core/failure.dart';
 
 class AuthService {
+  // Singleton pattern
+  static final AuthService _instance = AuthService._internal();
+  factory AuthService() => _instance;
+  AuthService._internal();
+
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 

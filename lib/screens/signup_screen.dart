@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'scan_option_screen.dart';
-import '../services/auth_service.dart'; // <--- Import Auth Service
+import '../services/auth_service.dart';
 import '../const/my_const.dart';
 import '../widgets/custom_app_bar_widget.dart';
 import '../widgets/vt_primary_button_widget.dart';
+import '../widgets/vt_text_field_widget.dart';
+import '../widgets/password_criteria_widget.dart';
+import '../widgets/vt_snackbar_helper.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -62,18 +65,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         email.isEmpty ||
         password.isEmpty ||
         confirmPassword.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            "Please fill all fields",
-            style: textLabel.copyWith(
-              fontSize: 12,
-              color: Theme.of(context).colorScheme.onSurface,
-            ),
-          ),
-          backgroundColor: Colors.redAccent,
-        ),
-      );
+      showVTSnackBar(context, "Please fill all fields", Colors.redAccent);
       return;
     }
 
@@ -81,35 +73,17 @@ class _SignUpScreenState extends State<SignUpScreen> {
     bool isPasswordValid =
         _hasMinLength && _hasUppercase && _hasDigits && _hasSpecialChars;
     if (!isPasswordValid) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            "Please meet all password requirements",
-            style: textLabel.copyWith(
-              fontSize: 12,
-              color: Theme.of(context).colorScheme.onSurface,
-            ),
-          ),
-          backgroundColor: Colors.redAccent,
-        ),
+      showVTSnackBar(
+        context,
+        "Please meet all password requirements",
+        Colors.redAccent,
       );
       return;
     }
 
     // เช็คว่ารหัสผ่าน 2 ช่องตรงกันไหม
     if (password != confirmPassword) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            "Passwords do not match",
-            style: textLabel.copyWith(
-              fontSize: 12,
-              color: Theme.of(context).colorScheme.onSurface,
-            ),
-          ),
-          backgroundColor: Colors.redAccent,
-        ),
-      );
+      showVTSnackBar(context, "Passwords do not match", Colors.redAccent);
       return;
     }
 
@@ -128,19 +102,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
       resultOrFailure.fold(
         (failure) {
-          // ถ้าเกิด Error (เช่น อีเมลซ้ำ, พิมพ์ผิดรูปแบบ)
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                failure.message,
-                style: textLabel.copyWith(
-                  fontSize: 12,
-                  color: Theme.of(context).colorScheme.onSurface,
-                ),
-              ),
-              backgroundColor: Colors.redAccent,
-            ),
-          );
+          showVTSnackBar(context, failure.message, Colors.redAccent);
         },
         (user) {
           // สำเร็จ! พาไปหน้าสแกนไวรัส และลบประวัติการย้อนกลับ
@@ -170,27 +132,27 @@ class _SignUpScreenState extends State<SignUpScreen> {
             const SizedBox(height: 40),
 
             // --- ฟอร์มกรอกข้อมูล (ผูก Controller ให้ครบ) ---
-            _buildTextField(
+            VTTextField(
               hint: "Full Name",
               icon: Icons.person_outline,
               controller: _nameController,
             ),
             const SizedBox(height: 16),
 
-            _buildTextField(
+            VTTextField(
               hint: "Email Address",
               icon: Icons.email_outlined,
               controller: _emailController,
             ),
             const SizedBox(height: 16),
 
-            _buildTextField(
+            VTTextField(
               hint: "Password",
               icon: Icons.lock_outline,
               isPassword: true,
               controller: _passwordController,
               onChanged: _validatePassword,
-              obscureState: _obscurePassword,
+              obscureText: _obscurePassword,
               onObscureToggle: () =>
                   setState(() => _obscurePassword = !_obscurePassword),
             ),
@@ -198,23 +160,32 @@ class _SignUpScreenState extends State<SignUpScreen> {
             // --- Checklist ตรวจรหัสผ่าน ---
             if (_passwordController.text.isNotEmpty) ...[
               const SizedBox(height: 12),
-              _buildPasswordCriteria("At least 8 characters", _hasMinLength),
-              _buildPasswordCriteria("Contains uppercase (A-Z)", _hasUppercase),
-              _buildPasswordCriteria("Contains number (0-9)", _hasDigits),
-              _buildPasswordCriteria(
-                "Contains special char (!@#\$)",
-                _hasSpecialChars,
+              PasswordCriteriaWidget(
+                text: "At least 8 characters",
+                isMet: _hasMinLength,
+              ),
+              PasswordCriteriaWidget(
+                text: "Contains uppercase (A-Z)",
+                isMet: _hasUppercase,
+              ),
+              PasswordCriteriaWidget(
+                text: "Contains number (0-9)",
+                isMet: _hasDigits,
+              ),
+              PasswordCriteriaWidget(
+                text: "Contains special char (!@#\$)",
+                isMet: _hasSpecialChars,
               ),
             ],
 
             const SizedBox(height: 16),
 
-            _buildTextField(
+            VTTextField(
               hint: "Confirm Password",
               icon: Icons.lock_reset,
               isPassword: true,
               controller: _confirmPasswordController,
-              obscureState: _obscureConfirm,
+              obscureText: _obscureConfirm,
               onObscureToggle: () =>
                   setState(() => _obscureConfirm = !_obscureConfirm),
             ),
@@ -249,72 +220,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
             const SizedBox(height: 30),
           ],
         ),
-      ),
-    );
-  }
-
-  // Widget สร้าง TextField ที่ปรับแต่งให้รับ Controller และ onChanged ได้
-  Widget _buildTextField({
-    required String hint,
-    required IconData icon,
-    bool isPassword = false,
-    TextEditingController? controller,
-    Function(String)? onChanged,
-    bool obscureState = true,
-    VoidCallback? onObscureToggle,
-  }) {
-    return TextField(
-      controller: controller,
-      onChanged: onChanged,
-      obscureText: isPassword ? obscureState : false,
-      style: textDescription.copyWith(color: vtTextPrimary),
-      decoration: InputDecoration(
-        hintText: hint,
-        hintStyle: textDescription,
-        filled: true,
-        fillColor: Theme.of(context).cardColor,
-        prefixIcon: Icon(icon, color: Colors.grey),
-        suffixIcon: isPassword
-            ? IconButton(
-                icon: Icon(
-                  obscureState ? Icons.visibility_off : Icons.visibility,
-                  color: Colors.grey,
-                ),
-                onPressed: onObscureToggle,
-              )
-            : null,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide.none,
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: vtAccent, width: 2),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPasswordCriteria(String text, bool isMet) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 4.0, left: 10.0),
-      child: Row(
-        children: [
-          Icon(
-            isMet ? Icons.check_circle : Icons.radio_button_unchecked,
-            color: isMet ? vtGreen : Colors.grey,
-            size: 16,
-          ),
-          const SizedBox(width: 8),
-          Text(
-            text,
-            style: TextStyle(
-              color: isMet ? vtGreen : Colors.grey,
-              fontFamily: 'Courier',
-              fontSize: 12,
-            ),
-          ),
-        ],
       ),
     );
   }

@@ -22,8 +22,8 @@ class ScanOptionScreen extends StatefulWidget {
 class _ScanOptionScreenState extends State<ScanOptionScreen> {
   int _selectedIndex = 0;
 
-  // รายชื่อหน้าจอที่จะให้สลับไปมาตาม Bottom Nav Bar
-  List<Widget> get _pages => [
+  // Cache หน้าจอไว้ เพื่อไม่ให้สร้างใหม่ทุกครั้งที่ build()
+  late final List<Widget> _pages = [
     _buildScannerHome(), // Index 0: หน้า Scanner เดิม
     const DashboardScreen(), // Index 1: หน้า Dashboard
     const ThreatIntelScreen(), // Index 2: หน้า Threat Intel
@@ -54,10 +54,8 @@ class _ScanOptionScreenState extends State<ScanOptionScreen> {
       ),
 
       // สลับ Widget ของ body ตาม Index ที่ถูกคลิก พร้อมทำ Animation
-      body: _pages[_selectedIndex]
-          .animate(key: ValueKey(_selectedIndex))
-          .fade(duration: 300.ms)
-          .slideY(begin: 0.05, duration: 300.ms, curve: Curves.easeOut),
+      // ใช้ IndexedStack เพื่อเก็บ State ของแต่ละหน้าไว้ (เช่น scroll position, loaded data)
+      body: IndexedStack(index: _selectedIndex, children: _pages),
 
       bottomNavigationBar: SizedBox(
         height: 100, // ยืดความสูงขึ้นเล็กน้อย

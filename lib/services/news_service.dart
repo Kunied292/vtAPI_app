@@ -5,6 +5,11 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../core/failure.dart';
 
 class NewsService {
+  // Singleton pattern
+  static final NewsService _instance = NewsService._internal();
+  factory NewsService() => _instance;
+  NewsService._internal();
+
   // ดึง API Key จากไฟล์ .env ผ่าน flutter_dotenv
   final String _apiKey = dotenv.env['NEWS_API_KEY'] ?? '';
 

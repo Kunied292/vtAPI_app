@@ -7,6 +7,8 @@ import 'scan_option_screen.dart';
 import '../services/auth_service.dart';
 import '../const/my_const.dart';
 import '../widgets/vt_primary_button_widget.dart';
+import '../widgets/vt_text_field_widget.dart';
+import '../widgets/vt_snackbar_helper.dart';
 
 class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key});
@@ -38,17 +40,10 @@ class _SignInScreenState extends State<SignInScreen> {
 
     // ดักไว้ก่อนว่ากรอกครบไหม
     if (email.isEmpty || password.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            "Please enter both email and password",
-            style: textLabel.copyWith(
-              fontSize: 12,
-              color: Theme.of(context).colorScheme.onSurface,
-            ),
-          ),
-          backgroundColor: Colors.redAccent,
-        ),
+      showVTSnackBar(
+        context,
+        "Please enter both email and password",
+        Colors.redAccent,
       );
       return;
     }
@@ -64,19 +59,7 @@ class _SignInScreenState extends State<SignInScreen> {
 
       resultOrFailure.fold(
         (failure) {
-          // แจ้งเตือน Error
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                failure.message,
-                style: textLabel.copyWith(
-                  fontSize: 12,
-                  color: Theme.of(context).colorScheme.onSurface,
-                ),
-              ),
-              backgroundColor: Colors.redAccent,
-            ),
-          );
+          showVTSnackBar(context, failure.message, Colors.redAccent);
         },
         (user) {
           // ล็อกอินสำเร็จ ล้างประวัติหน้า Login แล้วไปหน้า Scanner
@@ -108,13 +91,7 @@ class _SignInScreenState extends State<SignInScreen> {
           (route) => false,
         );
       } else if (errorMessage != 'cancelled') {
-        // โชว์ Error (ยกเว้นกรณีที่ผู้ใช้กดยกเลิกเอง)
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(errorMessage),
-            backgroundColor: Colors.redAccent,
-          ),
-        );
+        showVTSnackBar(context, errorMessage, Colors.redAccent);
       }
     }
   }
@@ -145,17 +122,20 @@ class _SignInScreenState extends State<SignInScreen> {
                 const SizedBox(height: 40),
 
                 // --- ฟอร์มล็อกอิน ---
-                _buildTextField(
+                VTTextField(
                   hint: "Email Address",
                   icon: Icons.email_outlined,
                   controller: _emailController,
                 ),
                 const SizedBox(height: 16),
-                _buildTextField(
+                VTTextField(
                   hint: "Password",
                   icon: Icons.lock_outline,
                   isPassword: true,
                   controller: _passwordController,
+                  obscureText: _obscurePassword,
+                  onObscureToggle: () =>
+                      setState(() => _obscurePassword = !_obscurePassword),
                 ),
 
                 const SizedBox(height: 10),
@@ -281,45 +261,6 @@ class _SignInScreenState extends State<SignInScreen> {
               ],
             ),
           ),
-        ),
-      ),
-    );
-  }
-
-  // Widget สร้าง TextField
-  Widget _buildTextField({
-    required String hint,
-    required IconData icon,
-    bool isPassword = false,
-    TextEditingController? controller,
-  }) {
-    return TextField(
-      controller: controller,
-      obscureText: isPassword ? _obscurePassword : false,
-      style: textDescription.copyWith(color: vtTextPrimary),
-      decoration: InputDecoration(
-        hintText: hint,
-        hintStyle: textDescription,
-        filled: true,
-        fillColor: Theme.of(context).cardColor,
-        prefixIcon: Icon(icon, color: Colors.grey),
-        suffixIcon: isPassword
-            ? IconButton(
-                icon: Icon(
-                  _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                  color: Colors.grey,
-                ),
-                onPressed: () =>
-                    setState(() => _obscurePassword = !_obscurePassword),
-              )
-            : null,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide.none,
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: vtAccent, width: 2),
         ),
       ),
     );

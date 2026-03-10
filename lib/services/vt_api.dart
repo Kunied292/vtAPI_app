@@ -6,6 +6,11 @@ import 'package:dartz/dartz.dart';
 import '../core/failure.dart';
 
 class VtApiService {
+  // Singleton pattern
+  static final VtApiService _instance = VtApiService._internal();
+  factory VtApiService() => _instance;
+  VtApiService._internal();
+
   final String _apiKey = dotenv.env['VT_API_KEY'] ?? '';
 
   // ฟังก์ชันอัปโหลดไฟล์ไปยัง VirusTotal

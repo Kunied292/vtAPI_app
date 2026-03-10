@@ -8,6 +8,7 @@ import 'help_screen.dart';
 import 'about_screen.dart';
 import '../const/my_const.dart';
 import '../widgets/vt_primary_button_widget.dart';
+import '../widgets/vt_menu_row_widget.dart';
 import '../services/vt_api.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -28,10 +29,9 @@ class ProfileScreen extends StatelessWidget {
         ],
 
         if (!isGuest) ...[
-          _buildMenuRow(
-            context,
-            FontAwesomeIcons.solidUser,
-            "MANAGE ACCOUNT",
+          VTMenuRow(
+            icon: FontAwesomeIcons.solidUser,
+            text: "MANAGE ACCOUNT",
             onTap: () {
               Navigator.push(
                 context,
@@ -44,20 +44,18 @@ class ProfileScreen extends StatelessWidget {
           const SizedBox(height: 12),
         ],
 
-        _buildMenuRow(
-          context,
-          FontAwesomeIcons.chartLine,
-          "API USAGE",
+        VTMenuRow(
+          icon: FontAwesomeIcons.chartLine,
+          text: "API USAGE",
           onTap: () {
             _showApiUsageDialog(context);
           },
         ),
         const SizedBox(height: 12),
 
-        _buildMenuRow(
-          context,
-          Icons.settings,
-          "SETTINGS",
+        VTMenuRow(
+          icon: Icons.settings,
+          text: "SETTINGS",
           onTap: () {
             Navigator.push(
               context,
@@ -67,10 +65,9 @@ class ProfileScreen extends StatelessWidget {
         ),
         const SizedBox(height: 12),
 
-        _buildMenuRow(
-          context,
-          Icons.help_outline,
-          "HELP & SUPPORT",
+        VTMenuRow(
+          icon: Icons.help_outline,
+          text: "HELP & SUPPORT",
           onTap: () {
             Navigator.push(
               context,
@@ -80,10 +77,9 @@ class ProfileScreen extends StatelessWidget {
         ),
         const SizedBox(height: 12),
 
-        _buildMenuRow(
-          context,
-          Icons.info_outline,
-          "ABOUT APP",
+        VTMenuRow(
+          icon: Icons.info_outline,
+          text: "ABOUT APP",
           onTap: () {
             Navigator.push(
               context,
@@ -138,46 +134,6 @@ class ProfileScreen extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildMenuRow(
-    BuildContext context,
-    IconData icon,
-    String text, {
-    VoidCallback? onTap,
-  }) {
-    return Material(
-      color: Theme.of(context).cardColor,
-      borderRadius: BorderRadius.circular(16),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Row(
-            children: [
-              Icon(
-                icon,
-                color: Theme.of(context).colorScheme.onSurface,
-                size: 24,
-              ),
-              const SizedBox(width: 20),
-              Expanded(
-                child: Text(
-                  text,
-                  style: textLabel.copyWith(
-                    color: Theme.of(context).colorScheme.onSurface,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                  ),
-                ),
-              ),
-              const Icon(Icons.arrow_forward_ios, color: Colors.grey, size: 16),
-            ],
-          ),
-        ),
       ),
     );
   }

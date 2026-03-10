@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 // ignore_for_file: deprecated_member_use
 import '../const/my_const.dart';
 import '../widgets/custom_app_bar_widget.dart';
+import '../widgets/vt_menu_row_widget.dart';
 import 'package:provider/provider.dart';
 import '../providers/theme_provider.dart';
 
@@ -29,65 +30,13 @@ class _SettingScreenState extends State<SettingScreen> {
       body: ListView(
         padding: const EdgeInsets.all(24.0),
         children: [
-          _buildMenuRow(
-            Icons.color_lens_outlined,
-            "THEME",
+          VTMenuRow(
+            icon: Icons.color_lens_outlined,
+            text: "THEME",
             subtitle: currentThemeStr,
             onTap: () => _showThemeDialog(context, themeProvider),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildMenuRow(
-    IconData icon,
-    String text, {
-    String? subtitle,
-    VoidCallback? onTap,
-  }) {
-    return Material(
-      color: Theme.of(context).cardColor,
-      borderRadius: BorderRadius.circular(16),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Row(
-            children: [
-              Icon(
-                icon,
-                color: Theme.of(context).colorScheme.onSurface,
-                size: 24,
-              ),
-              const SizedBox(width: 20),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      text,
-                      style: textLabel.copyWith(
-                        color: Theme.of(context).colorScheme.onSurface,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                      ),
-                    ),
-                    if (subtitle != null) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        subtitle,
-                        style: textDescription.copyWith(fontSize: 12),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-              const Icon(Icons.arrow_forward_ios, color: Colors.grey, size: 16),
-            ],
-          ),
-        ),
       ),
     );
   }
